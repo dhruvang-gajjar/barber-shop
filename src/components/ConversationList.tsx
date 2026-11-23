@@ -21,6 +21,7 @@ interface ConversationListProps {
   onStartNewChat: (phone: string) => void;
   isLoading: boolean;
   onRefresh: () => void;
+  className?: string;
 }
 
 export default function ConversationList({
@@ -30,6 +31,7 @@ export default function ConversationList({
   onStartNewChat,
   isLoading,
   onRefresh,
+  className,
 }: ConversationListProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [showNewChatModal, setShowNewChatModal] = useState(false);
@@ -59,7 +61,7 @@ export default function ConversationList({
   };
 
   return (
-    <div className="w-full md:w-80 lg:w-96 h-full flex flex-col bg-white border-r border-[#E9EDEF] select-none">
+    <div className={cn("w-full md:w-80 lg:w-96 h-full flex flex-col bg-white border-r border-[#E9EDEF] select-none flex-shrink-0", className)}>
       {/* Header bar */}
       <div className="bg-[#F0F2F5] px-4 py-3 flex items-center justify-between border-b border-[#E9EDEF]">
         <div className="flex items-center space-x-2">

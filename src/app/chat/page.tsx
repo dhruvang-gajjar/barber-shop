@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback, Suspense, useRef } from "react";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import ConversationList from "@/components/ConversationList";
 import ChatWindow from "@/components/ChatWindow";
 import { fetchConversations, fetchMessages } from "@/lib/api";
@@ -9,6 +9,7 @@ import { getPusherClient } from "@/lib/pusher";
 import type { ConversationSummary, StoredMessage } from "@/types";
 
 function ChatInbox() {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const initialPhone = searchParams.get("phone");
 
@@ -147,23 +148,42 @@ function ChatInbox() {
     (c) => c.phone_number === selectedPhone
   );
 
+  const handleSelectConversation = (phone: string) => {
+    setSelectedPhone(phone);
+    const params = new URLSearchParams(searchParams.toString());
+    params.set("phone", phone);
+    router.replace(`/chat?${params.toString()}`);
+  };
+
   const handleStartNewChat = (phone: string) => {
     setSelectedPhone(phone);
+    const params = new URLSearchParams(searchParams.toString());
+    params.set("phone", phone);
+    router.replace(`/chat?${params.toString()}`);
     loadMessages(phone, true);
   };
 
+  const handleBackToList = () => {
+    setSelectedPhone(null);
+    const params = new URLSearchParams(searchParams.toString());
+    params.delete("phone");
+    const q = params.toString();
+    router.replace(q ? `/chat?${q}` : "/chat");
+  };
+
   return (
-    <div className="h-[calc(100vh-65px)] w-full flex flex-col overflow-hidden bg-[#121214]">
+    <div className="h-[calc(100dvh-57px)] w-full flex flex-col overflow-hidden bg-[#121214]">
       {/* Main Inbox Panels */}
       <div className="flex-1 flex overflow-hidden">
         {/* Sidebar Conversation List */}
         <ConversationList
           conversations={conversations}
           selectedPhone={selectedPhone}
-          onSelectConversation={(phone) => setSelectedPhone(phone)}
+          onSelectConversation={handleSelectConversation}
           onStartNewChat={handleStartNewChat}
           isLoading={isLoadingConversations}
           onRefresh={() => loadConversations(true, true)}
+          className={selectedPhone ? "hidden md:flex" : "flex"}
         />
 
         {/* Main Chat Panel */}
@@ -177,6 +197,8 @@ function ChatInbox() {
             if (selectedPhone) loadMessages(selectedPhone, false, true);
             loadConversations(false, true);
           }}
+          onBack={handleBackToList}
+          className={selectedPhone ? "flex" : "hidden md:flex"}
         />
       </div>
     </div>

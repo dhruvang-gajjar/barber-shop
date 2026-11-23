@@ -12,6 +12,7 @@ import {
   Sparkles,
   Bot,
   MessageCircle,
+  ArrowLeft,
 } from "lucide-react";
 import type { StoredMessage } from "@/types";
 import { formatBubbleTime, formatPhoneNumber, cn } from "@/lib/utils";
@@ -24,13 +25,15 @@ interface ChatWindowProps {
   isLoading: boolean;
   onRefresh: () => void;
   onMessageSent: () => void;
+  onBack?: () => void;
+  className?: string;
 }
 
 const CANNED_RESPONSES = [
-  "Namaste! How can our advisory team assist you today?",
-  "Our senior advisor will call you shortly on this number.",
-  "Could you share your approximate requirements or goals?",
-  "Thank you for reaching out! We are here to help.",
+  "Hello! How can we help you at YP THE BARBER SHOP today?",
+  "Your appointment is confirmed. See you soon!",
+  "Please let us know which services you'd like to book.",
+  "Thank you for visiting YP THE BARBER SHOP!",
 ];
 
 export default function ChatWindow({
@@ -40,6 +43,8 @@ export default function ChatWindow({
   isLoading,
   onRefresh,
   onMessageSent,
+  onBack,
+  className,
 }: ChatWindowProps) {
   const [inputText, setInputText] = useState("");
   const [isSending, setIsSending] = useState(false);
@@ -63,7 +68,7 @@ export default function ChatWindow({
 
   if (!phone) {
     return (
-      <div className="flex-1 h-full flex flex-col items-center justify-center bg-[#F0F2F5] select-none p-6 text-center">
+      <div className={cn("hidden md:flex flex-1 h-full flex-col items-center justify-center bg-[#F0F2F5] select-none p-6 text-center", className)}>
         <div className="w-20 h-20 rounded-full bg-emerald-100/70 text-emerald-700 flex items-center justify-center mb-4 shadow-inner">
           <MessageCircle className="w-10 h-10" />
         </div>
@@ -117,11 +122,21 @@ export default function ChatWindow({
   };
 
   return (
-    <div className="flex-1 h-full flex flex-col bg-[#EFEAE2] overflow-hidden">
+    <div className={cn("flex-1 h-full flex flex-col bg-[#EFEAE2] overflow-hidden w-full", className)}>
       {/* Contact Header */}
-      <div className="bg-[#F0F2F5] px-4 py-2.5 flex items-center justify-between border-b border-[#E9EDEF] z-10 shadow-xs">
-        <div className="flex items-center space-x-3">
-          <div className="w-10 h-10 rounded-full bg-emerald-800 text-white flex items-center justify-center font-bold text-sm shadow-sm">
+      <div className="bg-[#F0F2F5] px-3 sm:px-4 py-2.5 flex items-center justify-between border-b border-[#E9EDEF] z-10 shadow-xs">
+        <div className="flex items-center space-x-2 sm:space-x-3 min-w-0">
+          {onBack && (
+            <button
+              onClick={onBack}
+              className="md:hidden p-1.5 -ml-1 text-gray-600 hover:text-gray-900 hover:bg-gray-200 rounded-full transition flex-shrink-0"
+              title="Back to conversations"
+              aria-label="Back to conversations"
+            >
+              <ArrowLeft className="w-5 h-5" />
+            </button>
+          )}
+          <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-emerald-800 text-white flex items-center justify-center font-bold text-sm shadow-sm flex-shrink-0">
             {senderName
               ? senderName
                   .split(" ")
@@ -131,26 +146,26 @@ export default function ChatWindow({
                   .toUpperCase()
               : <User className="w-5 h-5" />}
           </div>
-          <div>
-            <h3 className="font-semibold text-gray-900 text-sm flex items-center gap-1.5">
-              <span>{senderName || formatPhoneNumber(phone)}</span>
+          <div className="min-w-0">
+            <h3 className="font-semibold text-gray-900 text-sm flex items-center gap-1.5 truncate">
+              <span className="truncate">{senderName || formatPhoneNumber(phone)}</span>
             </h3>
-            <p className="text-xs text-gray-500 font-mono">
+            <p className="text-xs text-gray-500 font-mono truncate">
               {formatPhoneNumber(phone)}
             </p>
           </div>
         </div>
 
         {/* Action Controls */}
-        <div className="flex items-center space-x-2">
+        <div className="flex items-center space-x-1.5 sm:space-x-2 flex-shrink-0">
           {/* Resume Bot Button */}
           <button
             onClick={handleResumeBot}
             disabled={isResumingBot}
             title="Resume automated AI assistant flow"
-            className="flex items-center space-x-1.5 px-3 py-1.5 bg-white border border-gray-300 text-gray-700 hover:bg-emerald-50 hover:text-emerald-700 hover:border-emerald-300 rounded-md text-xs font-medium shadow-2xs transition"
+            className="flex items-center space-x-1 sm:space-x-1.5 px-2.5 sm:px-3 py-1.5 bg-white border border-gray-300 text-gray-700 hover:bg-emerald-50 hover:text-emerald-700 hover:border-emerald-300 rounded-md text-xs font-medium shadow-2xs transition"
           >
-            <Bot className="w-3.5 h-3.5 text-emerald-600" />
+            <Bot className="w-3.5 h-3.5 text-emerald-600 flex-shrink-0" />
             <span>{isResumingBot ? "Resuming..." : "Resume Bot"}</span>
           </button>
 
@@ -159,7 +174,7 @@ export default function ChatWindow({
             onClick={onRefresh}
             title="Refresh chat messages"
             className={cn(
-              "p-2 text-gray-600 hover:text-emerald-700 hover:bg-gray-200 rounded-full transition",
+              "p-1.5 sm:p-2 text-gray-600 hover:text-emerald-700 hover:bg-gray-200 rounded-full transition",
               isLoading && "animate-spin text-emerald-600"
             )}
           >
