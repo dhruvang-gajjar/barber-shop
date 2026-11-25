@@ -3,7 +3,7 @@ import "./globals.css";
 import DashboardShell from "@/components/DashboardShell";
 
 export const metadata: Metadata = {
-  title: "YP THE BARBER SHOP",
+  title: "THE BARBER SHOP",
   description: "Barber Shop Queue Management and WhatsApp Hub",
 };
 

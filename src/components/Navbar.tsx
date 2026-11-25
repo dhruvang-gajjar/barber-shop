@@ -19,7 +19,7 @@ export default function Navbar() {
         <div className="flex items-center space-x-8">
           <Link href="/" className="flex items-center">
             <span className="font-semibold tracking-wider text-sm sm:text-base text-white uppercase font-mono">
-              YP THE BARBER SHOP
+              THE BARBER SHOP
             </span>
           </Link>
 

@@ -45,7 +45,7 @@ export default function LoginPage() {
         {/* Brand Header */}
         <div className="text-center mb-8">
           <h1 className="text-xl font-bold tracking-widest text-white uppercase font-mono mb-2">
-            YP THE BARBER SHOP
+            THE BARBER SHOP
           </h1>
           <p className="text-xs text-zinc-400">
             Queue and Chat Console

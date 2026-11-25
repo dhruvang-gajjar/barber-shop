@@ -30,10 +30,10 @@ interface ChatWindowProps {
 }
 
 const CANNED_RESPONSES = [
-  "Hello! How can we help you at YP THE BARBER SHOP today?",
+  "Hello! How can we help you at THE BARBER SHOP today?",
   "Your appointment is confirmed. See you soon!",
   "Please let us know which services you'd like to book.",
-  "Thank you for visiting YP THE BARBER SHOP!",
+  "Thank you for visiting THE BARBER SHOP!",
 ];
 
 export default function ChatWindow({
