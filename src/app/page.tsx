@@ -331,17 +331,8 @@ function QueueDashboard() {
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 select-none">
       {/* Top Control Bar */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
-        <div>
-          <h1 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">
-            Queue
-          </h1>
-          <p className="text-xs text-slate-500 mt-0.5">
-            First come, first serve appointments for today.
-          </p>
-        </div>
-
-        {/* Date Selector & Action Buttons */}
+      <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
+        {/* Date Selector & Day Navigation */}
         <div className="flex flex-wrap items-center gap-2">
           {/* Day Navigation */}
           <div className="flex items-center bg-white border border-slate-200 rounded-xl p-1 shadow-xs">

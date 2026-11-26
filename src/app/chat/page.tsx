@@ -181,7 +181,7 @@ function ChatInbox() {
   };
 
   return (
-    <div className="h-[calc(100dvh-57px)] w-full flex flex-col overflow-hidden bg-slate-100">
+    <div className="h-[calc(100dvh-56px)] md:h-screen w-full flex flex-col overflow-hidden bg-slate-100">
       {/* Main Inbox Panels */}
       <div className="flex-1 flex overflow-hidden">
         {/* Sidebar Conversation List */}

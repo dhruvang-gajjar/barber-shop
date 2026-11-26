@@ -22,11 +22,11 @@ export default function DashboardShell({ children }: { children: React.ReactNode
               {children}
             </div>
           ) : (
-            <div className="min-h-screen w-full flex flex-col bg-gradient-to-br from-slate-50 via-[#F8FAFC] to-[#F1F5F9] text-slate-900">
-              <Suspense fallback={<div className="h-14 bg-white/80 border-b border-slate-200" />}>
+            <div className="min-h-screen w-full flex flex-col md:flex-row bg-gradient-to-br from-slate-50 via-[#F8FAFC] to-[#F1F5F9] text-slate-900">
+              <Suspense fallback={<div className="w-64 bg-white/80 border-r border-slate-200 hidden md:block" />}>
                 <Navbar />
               </Suspense>
-              <main className="flex-1">{children}</main>
+              <main className="flex-1 min-w-0">{children}</main>
             </div>
           )}
         </NotificationProvider>
