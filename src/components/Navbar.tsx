@@ -11,18 +11,52 @@ import {
   Menu,
   X,
   Scissors,
+  ChevronDown,
+  Check,
+  Building2,
+  Plus,
 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { useNotification } from "@/context/NotificationContext";
+import { useBusiness } from "@/context/BusinessContext";
 
 export default function Navbar() {
   const pathname = usePathname();
   const { logout, user } = useAuth();
   const { unreadCount, permission, requestPermission, isSupported } = useNotification();
+  const { activeBusiness, businesses, setActiveBusinessId, registerBusiness, canSwitchBusiness } = useBusiness();
+
   const [isMobileDrawerOpen, setIsMobileDrawerOpen] = useState(false);
+  const [showBizDropdown, setShowBizDropdown] = useState(false);
+  const [showAddBizModal, setShowAddBizModal] = useState(false);
+
+  // New Business Form State
+  const [newBizName, setNewBizName] = useState("");
+  const [newBizTagline, setNewBizTagline] = useState("");
+  const [newBizPhone, setNewBizPhone] = useState("");
+  const [newBizCity, setNewBizCity] = useState("");
 
   const isQueue = pathname === "/";
   const isChat = pathname === "/chat";
+
+  const handleCreateBusiness = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newBizName.trim()) return;
+
+    registerBusiness({
+      name: newBizName.trim(),
+      tagline: newBizTagline.trim() || "Salon & Barber Lounge",
+      phone: newBizPhone.trim() || "+91 98000 00000",
+      city: newBizCity.trim() || "India",
+    });
+
+    setNewBizName("");
+    setNewBizTagline("");
+    setNewBizPhone("");
+    setNewBizCity("");
+    setShowAddBizModal(false);
+    setShowBizDropdown(false);
+  };
 
   return (
     <>
@@ -30,19 +64,96 @@ export default function Navbar() {
       {/* DESKTOP APP DRAWER / SIDEBAR (md and above)                      */}
       {/* ================================================================= */}
       <aside className="hidden md:flex flex-col w-64 h-screen sticky top-0 bg-white/95 backdrop-blur-md border-r border-slate-200/90 shadow-[1px_0_4px_rgba(0,0,0,0.03)] z-30 select-none flex-shrink-0">
-        {/* Brand Header */}
-        <div className="p-5 border-b border-slate-100 flex items-center space-x-3">
-          <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-amber-500 to-amber-700 text-white flex items-center justify-center font-bold text-sm shadow-xs">
-            <Scissors className="w-4 h-4" />
-          </div>
-          <div className="min-w-0">
-            <h1 className="font-bold tracking-wider text-sm bg-gradient-to-r from-slate-900 via-stone-800 to-amber-700 bg-clip-text text-transparent uppercase font-mono truncate">
-              THE BARBER SHOP
-            </h1>
-            <p className="text-[10px] text-slate-400 font-medium tracking-wide">
-              Salon & Queue Hub
-            </p>
-          </div>
+        {/* Brand / Multi-Business Switcher Header */}
+        <div className="relative border-b border-slate-100">
+          <button
+            type="button"
+            onClick={() => canSwitchBusiness && setShowBizDropdown(!showBizDropdown)}
+            className={`w-full text-left p-4 flex items-center justify-between transition ${
+              canSwitchBusiness ? "hover:bg-slate-50/80 cursor-pointer" : "cursor-default"
+            }`}
+            title={canSwitchBusiness ? "Switch Business Dashboard" : activeBusiness.name}
+          >
+            <div className="flex items-center space-x-3 min-w-0">
+              <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-amber-500 to-amber-700 text-white flex items-center justify-center font-bold text-xs shadow-xs flex-shrink-0">
+                {activeBusiness.initials || "BS"}
+              </div>
+              <div className="min-w-0">
+                <div className="flex items-center space-x-1">
+                  <h1 className="font-bold tracking-wider text-xs sm:text-sm bg-gradient-to-r from-slate-900 via-stone-800 to-amber-700 bg-clip-text text-transparent uppercase font-mono truncate">
+                    {activeBusiness.name}
+                  </h1>
+                </div>
+                <p className="text-[10px] text-slate-400 font-medium tracking-wide truncate">
+                  {activeBusiness.city ? `${activeBusiness.city} • ` : ""}{activeBusiness.tagline}
+                </p>
+              </div>
+            </div>
+
+            {canSwitchBusiness && (
+              <ChevronDown
+                className={`w-4 h-4 text-slate-400 flex-shrink-0 ml-1 transition-transform ${
+                  showBizDropdown ? "rotate-180 text-amber-600" : ""
+                }`}
+              />
+            )}
+          </button>
+
+          {/* Business Dropdown Menu (For Multi-tenant Switching) */}
+          {showBizDropdown && canSwitchBusiness && (
+            <div className="absolute top-full left-2 right-2 mt-1 bg-white border border-slate-200 rounded-2xl shadow-xl z-50 p-1.5 animate-fade-in">
+              <div className="px-3 py-1.5 border-b border-slate-100 text-[10px] font-bold uppercase tracking-wider text-slate-400 flex items-center justify-between">
+                <span>Select Business</span>
+                <span className="text-[9px] bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded">
+                  {businesses.length} Active
+                </span>
+              </div>
+
+              <div className="max-h-56 overflow-y-auto py-1 space-y-0.5">
+                {businesses.map((biz) => {
+                  const isSelected = biz.id === activeBusiness.id;
+                  return (
+                    <button
+                      key={biz.id}
+                      type="button"
+                      onClick={() => {
+                        setActiveBusinessId(biz.id);
+                        setShowBizDropdown(false);
+                      }}
+                      className={`w-full text-left px-3 py-2 rounded-xl text-xs flex items-center justify-between transition ${
+                        isSelected
+                          ? "bg-amber-50/80 text-amber-950 font-semibold"
+                          : "text-slate-700 hover:bg-slate-50"
+                      }`}
+                    >
+                      <div className="flex items-center space-x-2.5 truncate">
+                        <div className="w-6 h-6 rounded-lg bg-slate-100 text-slate-700 flex items-center justify-center font-bold text-[10px] flex-shrink-0">
+                          {biz.initials || "B"}
+                        </div>
+                        <div className="truncate">
+                          <p className="truncate text-xs">{biz.name}</p>
+                          <p className="text-[10px] text-slate-400 truncate">{biz.city || "Salon"}</p>
+                        </div>
+                      </div>
+                      {isSelected && <Check className="w-3.5 h-3.5 text-amber-600 flex-shrink-0 ml-2" />}
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* Add New Business Action */}
+              <div className="pt-1.5 border-t border-slate-100">
+                <button
+                  type="button"
+                  onClick={() => setShowAddBizModal(true)}
+                  className="w-full flex items-center justify-center space-x-1.5 px-3 py-1.5 text-xs font-semibold text-amber-800 bg-amber-50/60 hover:bg-amber-100/70 border border-amber-200/60 rounded-xl transition cursor-pointer"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  <span>Register Client Business</span>
+                </button>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Navigation Links */}
@@ -113,7 +224,7 @@ export default function Navbar() {
               <p className="text-xs font-semibold text-slate-800 truncate">
                 {user?.name || "Barber Admin"}
               </p>
-              <p className="text-[10px] text-slate-400 truncate">Manager</p>
+              <p className="text-[10px] text-slate-400 truncate">{user?.email || "Manager"}</p>
             </div>
           </div>
 
@@ -142,14 +253,14 @@ export default function Navbar() {
             <Menu className="w-5 h-5" />
           </button>
 
-          <Link href="/" className="flex items-center space-x-2">
-            <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-amber-500 to-amber-700 text-white flex items-center justify-center">
-              <Scissors className="w-3.5 h-3.5" />
+          <div className="flex items-center space-x-2">
+            <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-amber-500 to-amber-700 text-white flex items-center justify-center text-xs font-bold font-mono">
+              {activeBusiness.initials || "BS"}
             </div>
-            <span className="font-bold tracking-wider text-xs uppercase font-mono text-slate-900">
-              THE BARBER SHOP
+            <span className="font-bold tracking-wider text-xs uppercase font-mono text-slate-900 truncate max-w-[140px]">
+              {activeBusiness.name}
             </span>
-          </Link>
+          </div>
         </div>
 
         <div className="flex items-center space-x-2">
@@ -198,27 +309,49 @@ export default function Navbar() {
           <div className="relative w-72 max-w-[85vw] bg-white h-full flex flex-col shadow-2xl z-10 animate-fade-in">
             {/* Drawer Top */}
             <div className="p-4 border-b border-slate-100 flex items-center justify-between">
-              <div className="flex items-center space-x-2.5">
-                <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-amber-500 to-amber-700 text-white flex items-center justify-center font-bold text-xs shadow-xs">
-                  <Scissors className="w-4 h-4" />
+              <div className="flex items-center space-x-2.5 min-w-0">
+                <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-amber-500 to-amber-700 text-white flex items-center justify-center font-bold text-xs shadow-xs flex-shrink-0">
+                  {activeBusiness.initials || "BS"}
                 </div>
-                <div>
-                  <h2 className="font-bold text-xs font-mono uppercase text-slate-900">
-                    THE BARBER SHOP
+                <div className="min-w-0">
+                  <h2 className="font-bold text-xs font-mono uppercase text-slate-900 truncate">
+                    {activeBusiness.name}
                   </h2>
-                  <p className="text-[10px] text-slate-400 font-medium">Console</p>
+                  <p className="text-[10px] text-slate-400 font-medium truncate">{activeBusiness.tagline}</p>
                 </div>
               </div>
 
               <button
                 type="button"
                 onClick={() => setIsMobileDrawerOpen(false)}
-                className="p-1.5 text-slate-400 hover:text-slate-700 rounded-lg hover:bg-slate-100 transition"
+                className="p-1.5 text-slate-400 hover:text-slate-700 rounded-lg hover:bg-slate-100 transition flex-shrink-0"
                 aria-label="Close menu"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
+
+            {/* Mobile Business Switcher Selector */}
+            {canSwitchBusiness && (
+              <div className="p-3 border-b border-slate-100 bg-slate-50/60">
+                <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">
+                  Active Business Tenant
+                </label>
+                <select
+                  value={activeBusiness.id}
+                  onChange={(e) => {
+                    setActiveBusinessId(e.target.value);
+                  }}
+                  className="w-full p-2 bg-white border border-slate-200 rounded-xl text-xs font-medium text-slate-800"
+                >
+                  {businesses.map((b) => (
+                    <option key={b.id} value={b.id}>
+                      {b.name} ({b.city || "Main"})
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
 
             {/* Drawer Nav Links */}
             <nav className="flex-1 p-3 space-y-1 overflow-y-auto">
@@ -258,15 +391,15 @@ export default function Navbar() {
 
             {/* Drawer Footer */}
             <div className="p-4 border-t border-slate-100 bg-slate-50/50 flex items-center justify-between">
-              <div className="flex items-center space-x-2">
-                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-amber-600 to-amber-800 text-white flex items-center justify-center text-xs font-bold">
+              <div className="flex items-center space-x-2 min-w-0">
+                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-amber-600 to-amber-800 text-white flex items-center justify-center text-xs font-bold flex-shrink-0">
                   {user?.name ? user.name.slice(0, 2).toUpperCase() : "BA"}
                 </div>
-                <div>
-                  <p className="text-xs font-semibold text-slate-800">
+                <div className="truncate">
+                  <p className="text-xs font-semibold text-slate-800 truncate">
                     {user?.name || "Barber Admin"}
                   </p>
-                  <p className="text-[10px] text-slate-400">Manager</p>
+                  <p className="text-[10px] text-slate-400 truncate">{user?.email || "Manager"}</p>
                 </div>
               </div>
 
@@ -281,6 +414,108 @@ export default function Navbar() {
                 <LogOut className="w-4 h-4" />
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* ================================================================= */}
+      {/* REGISTER NEW CLIENT BUSINESS MODAL                                */}
+      {/* ================================================================= */}
+      {showAddBizModal && (
+        <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white border border-slate-200 rounded-2xl w-full max-w-md p-5 shadow-2xl overflow-hidden animate-fade-in">
+            <div className="flex items-center justify-between mb-4 border-b border-slate-100 pb-3">
+              <div className="flex items-center space-x-2.5">
+                <div className="w-8 h-8 rounded-xl bg-amber-50 text-amber-700 flex items-center justify-center">
+                  <Building2 className="w-4 h-4" />
+                </div>
+                <h3 className="font-bold text-slate-900 text-sm">Register New Client Business</h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowAddBizModal(false)}
+                className="text-slate-400 hover:text-slate-600 p-1"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <form onSubmit={handleCreateBusiness} className="space-y-3">
+              <p className="text-xs text-slate-500">
+                Register a new salon or barber shop to manage under this dashboard without needing a separate deployment.
+              </p>
+
+              <div>
+                <label className="block text-[11px] font-semibold text-slate-600 mb-1">
+                  Business Name *
+                </label>
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. Vintage Blade Barbers"
+                  value={newBizName}
+                  onChange={(e) => setNewBizName(e.target.value)}
+                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 placeholder-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-semibold text-slate-600 mb-1">
+                  Tagline / Specialization
+                </label>
+                <input
+                  type="text"
+                  placeholder="e.g. Classic Shave & Beard Styling"
+                  value={newBizTagline}
+                  onChange={(e) => setNewBizTagline(e.target.value)}
+                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 placeholder-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-[11px] font-semibold text-slate-600 mb-1">
+                    WhatsApp Phone
+                  </label>
+                  <input
+                    type="tel"
+                    placeholder="+91 98765 00000"
+                    value={newBizPhone}
+                    onChange={(e) => setNewBizPhone(e.target.value)}
+                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 placeholder-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[11px] font-semibold text-slate-600 mb-1">
+                    City / Branch
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="e.g. Pune"
+                    value={newBizCity}
+                    onChange={(e) => setNewBizCity(e.target.value)}
+                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 placeholder-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500"
+                  />
+                </div>
+              </div>
+
+              <div className="flex justify-end space-x-2 pt-3 border-t border-slate-100">
+                <button
+                  type="button"
+                  onClick={() => setShowAddBizModal(false)}
+                  className="px-3 py-1.5 text-xs text-slate-600 hover:bg-slate-100 rounded-xl border border-slate-200 transition"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-1.5 text-xs font-semibold text-white bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-500 hover:to-amber-600 rounded-xl shadow-xs transition"
+                >
+                  Add Business
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

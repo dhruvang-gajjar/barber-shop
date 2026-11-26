@@ -124,3 +124,14 @@ export interface SalonQueueResponse {
   pending: Lead[];
   completed: Lead[];
 }
+
+export interface BusinessTenant {
+  id: string;
+  name: string;
+  tagline: string;
+  phone: string;
+  address?: string;
+  city?: string;
+  initials?: string;
+  isCustom?: boolean;
+}

@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import type { ConversationSummary } from "@/types";
 import { formatConversationTime, formatPhoneNumber, cn } from "@/lib/utils";
+import { useBusiness } from "@/context/BusinessContext";
 
 interface ConversationListProps {
   conversations: ConversationSummary[];
@@ -33,6 +34,7 @@ export default function ConversationList({
   onRefresh,
   className,
 }: ConversationListProps) {
+  const { activeBusiness } = useBusiness();
   const [searchQuery, setSearchQuery] = useState("");
   const [showNewChatModal, setShowNewChatModal] = useState(false);
   const [newChatPhone, setNewChatPhone] = useState("");
@@ -69,10 +71,13 @@ export default function ConversationList({
     >
       {/* Header bar */}
       <div className="bg-gradient-to-r from-slate-50 via-white to-slate-50 px-4 py-3 flex items-center justify-between border-b border-slate-200">
-        <div className="flex items-center space-x-2">
-          <h2 className="font-bold text-slate-900 text-base">Chats</h2>
-          <span className="bg-slate-100 text-slate-700 text-xs px-2 py-0.5 rounded-full font-semibold border border-slate-200">
+        <div className="flex items-center space-x-2 min-w-0">
+          <h2 className="font-bold text-slate-900 text-base flex-shrink-0">Chats</h2>
+          <span className="bg-slate-100 text-slate-700 text-xs px-2 py-0.5 rounded-full font-semibold border border-slate-200 flex-shrink-0">
             {conversations.length}
+          </span>
+          <span className="text-[10px] text-amber-700 bg-amber-50 border border-amber-200/80 px-2 py-0.5 rounded-full font-medium truncate max-w-[120px]">
+            {activeBusiness.name}
           </span>
         </div>
 

@@ -36,14 +36,6 @@ export default function LoginPage() {
     setIsSubmitting(false);
   };
 
-  const handleDemoLogin = async () => {
-    setErrorMessage(null);
-    setIsSubmitting(true);
-    await loginWithDemoAdmin();
-    router.push("/");
-    setIsSubmitting(false);
-  };
-
   const handleGoogleClick = async () => {
     setErrorMessage(null);
     setIsGoogleLoading(true);
@@ -167,16 +159,11 @@ export default function LoginPage() {
             </button>
           </form>
 
-          {/* Quick Demo Login */}
+          {/* Secure Access Footer */}
           <div className="mt-5 pt-4 border-t border-slate-100 text-center">
-            <p className="text-[11px] text-slate-500 mb-2">Need quick demo access?</p>
-            <button
-              type="button"
-              onClick={handleDemoLogin}
-              className="text-xs font-semibold text-amber-700 bg-amber-50 hover:bg-amber-100/80 border border-amber-200 py-1.5 px-3 rounded-xl transition cursor-pointer"
-            >
-              Instant Demo Admin Login
-            </button>
+            <p className="text-[11px] text-slate-400">
+              Authorized Business Access Only
+            </p>
           </div>
         </div>
       </div>
