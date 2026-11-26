@@ -6,17 +6,19 @@ import ConversationList from "@/components/ConversationList";
 import ChatWindow from "@/components/ChatWindow";
 import { fetchConversations, fetchMessages } from "@/lib/api";
 import { getPusherClient } from "@/lib/pusher";
+import { useNotification } from "@/context/NotificationContext";
 import type { ConversationSummary, StoredMessage } from "@/types";
 
 function ChatInbox() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const initialPhone = searchParams.get("phone");
+  const { setUnreadCount } = useNotification();
 
   const [conversations, setConversations] = useState<ConversationSummary[]>([]);
   const [selectedPhone, setSelectedPhone] = useState<string | null>(initialPhone);
   const [messages, setMessages] = useState<StoredMessage[]>([]);
-  const [isPusherActive, setIsPusherActive] = useState<boolean>(false);
+  const [, setIsPusherActive] = useState<boolean>(false);
 
   const [isLoadingConversations, setIsLoadingConversations] = useState(true);
   const [isLoadingMessages, setIsLoadingMessages] = useState(false);
@@ -28,6 +30,12 @@ function ChatInbox() {
   }, [selectedPhone]);
 
   const hasLoadedInitialConversations = useRef(false);
+
+  // Sync total unread count with Notification Context whenever conversations change
+  useEffect(() => {
+    const total = conversations.reduce((sum, c) => sum + (c.unread_count || 0), 0);
+    setUnreadCount(total);
+  }, [conversations, setUnreadCount]);
 
   // Load conversations list from Cloudflare D1
   const loadConversations = useCallback(async (showLoading = false, force = false) => {
@@ -57,7 +65,7 @@ function ChatInbox() {
     if (initialPhone && initialPhone !== selectedPhone) {
       setSelectedPhone(initialPhone);
     }
-  }, [initialPhone]);
+  }, [initialPhone, selectedPhone]);
 
   // When selected phone changes, fetch its initial message history once
   useEffect(() => {
@@ -68,7 +76,7 @@ function ChatInbox() {
     }
   }, [selectedPhone, loadMessages]);
 
-  // Pusher Real-time WebSocket Subscription
+  // Pusher Real-time WebSocket Subscription for Live Chat
   useEffect(() => {
     const pusher = getPusherClient();
 
@@ -80,67 +88,64 @@ function ChatInbox() {
     setIsPusherActive(true);
     const channel = pusher.subscribe("whatsapp-inbox");
 
-    // 1. Instant New Message Event (< 50ms delivery)
-    channel.bind(
-      "new-message",
-      (data: { message: StoredMessage; phone_number: string }) => {
-        const newMsg = data.message;
-        const phone = data.phone_number;
+    // 1. Instant New Message Event
+    const handleNewMessage = (data: { message: StoredMessage; phone_number: string }) => {
+      const newMsg = data.message;
+      const phone = data.phone_number;
 
-        if (selectedPhoneRef.current === phone) {
-          setMessages((prev) => {
-            if (prev.some((m) => m.id === newMsg.id)) return prev;
-            return [...prev, newMsg];
-          });
-        }
-
-        setConversations((prev) => {
-          const existingIndex = prev.findIndex((c) => c.phone_number === phone);
-          if (existingIndex >= 0) {
-            const updated = [...prev];
-            const currentItem = updated[existingIndex];
-            updated[existingIndex] = {
-              ...currentItem,
-              last_message: newMsg.text || `[${newMsg.type}]`,
-              last_timestamp: newMsg.timestamp,
-              last_direction: newMsg.direction,
-              unread_count:
-                selectedPhoneRef.current === phone
-                  ? 0
-                  : (currentItem.unread_count || 0) + 1,
-            };
-            const item = updated.splice(existingIndex, 1)[0];
-            return [item, ...updated];
-          } else {
-            const newConv: ConversationSummary = {
-              phone_number: phone,
-              sender_name: newMsg.sender_name || phone,
-              last_message: newMsg.text || `[${newMsg.type}]`,
-              last_timestamp: newMsg.timestamp,
-              last_direction: newMsg.direction,
-              unread_count: selectedPhoneRef.current === phone ? 0 : 1,
-            };
-            return [newConv, ...prev];
-          }
+      if (selectedPhoneRef.current === phone) {
+        setMessages((prev) => {
+          if (prev.some((m) => m.id === newMsg.id)) return prev;
+          return [...prev, newMsg];
         });
       }
-    );
+
+      setConversations((prev) => {
+        const existingIndex = prev.findIndex((c) => c.phone_number === phone);
+        if (existingIndex >= 0) {
+          const updated = [...prev];
+          const currentItem = updated[existingIndex];
+          updated[existingIndex] = {
+            ...currentItem,
+            last_message: newMsg.text || `[${newMsg.type}]`,
+            last_timestamp: newMsg.timestamp,
+            last_direction: newMsg.direction,
+            unread_count:
+              selectedPhoneRef.current === phone
+                ? 0
+                : (currentItem.unread_count || 0) + 1,
+          };
+          const item = updated.splice(existingIndex, 1)[0];
+          return [item, ...updated];
+        } else {
+          const newConv: ConversationSummary = {
+            phone_number: phone,
+            sender_name: newMsg.sender_name || phone,
+            last_message: newMsg.text || `[${newMsg.type}]`,
+            last_timestamp: newMsg.timestamp,
+            last_direction: newMsg.direction,
+            unread_count: selectedPhoneRef.current === phone ? 0 : 1,
+          };
+          return [newConv, ...prev];
+        }
+      });
+    };
 
     // 2. Instant Delivery Status Update
-    channel.bind(
-      "status-update",
-      (data: { message_id: string; status: any }) => {
-        setMessages((prev) =>
-          prev.map((m) =>
-            m.id === data.message_id ? { ...m, status: data.status } : m
-          )
-        );
-      }
-    );
+    const handleStatusUpdate = (data: { message_id: string; status: any }) => {
+      setMessages((prev) =>
+        prev.map((m) =>
+          m.id === data.message_id ? { ...m, status: data.status } : m
+        )
+      );
+    };
+
+    channel.bind("new-message", handleNewMessage);
+    channel.bind("status-update", handleStatusUpdate);
 
     return () => {
-      channel.unbind_all();
-      channel.unsubscribe();
+      channel.unbind("new-message", handleNewMessage);
+      channel.unbind("status-update", handleStatusUpdate);
     };
   }, []);
 
@@ -150,6 +155,10 @@ function ChatInbox() {
 
   const handleSelectConversation = (phone: string) => {
     setSelectedPhone(phone);
+    // Mark as read locally
+    setConversations((prev) =>
+      prev.map((c) => (c.phone_number === phone ? { ...c, unread_count: 0 } : c))
+    );
     const params = new URLSearchParams(searchParams.toString());
     params.set("phone", phone);
     router.replace(`/chat?${params.toString()}`);
@@ -172,7 +181,7 @@ function ChatInbox() {
   };
 
   return (
-    <div className="h-[calc(100dvh-57px)] w-full flex flex-col overflow-hidden bg-[#121214]">
+    <div className="h-[calc(100dvh-57px)] w-full flex flex-col overflow-hidden bg-slate-100">
       {/* Main Inbox Panels */}
       <div className="flex-1 flex overflow-hidden">
         {/* Sidebar Conversation List */}
@@ -207,7 +216,7 @@ function ChatInbox() {
 
 export default function ChatPage() {
   return (
-    <Suspense fallback={<div className="p-8 text-center text-barber-muted">Loading chat...</div>}>
+    <Suspense fallback={<div className="p-8 text-center text-slate-500 font-medium">Loading chat...</div>}>
       <ChatInbox />
     </Suspense>
   );

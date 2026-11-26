@@ -1,66 +1,82 @@
 "use client";
 
-import React, { useState } from "react";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
-import { Lock, Mail, Eye, EyeOff, AlertCircle, ArrowRight } from "lucide-react";
+import { AlertCircle, Eye, EyeOff, Lock, Mail } from "lucide-react";
 
 export default function LoginPage() {
-  const { login, loginWithGoogle, loginWithDemoAdmin } = useAuth();
+  const router = useRouter();
+  const { loginWithGoogle, login, loginWithDemoAdmin } = useAuth();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isGoogleLoading, setIsGoogleLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email || !password || isLoading) return;
-
-    setIsLoading(true);
     setErrorMessage(null);
 
-    const res = await login({ email, password });
-    if (!res.success) {
-      setErrorMessage(res.error || "Invalid email or password.");
-      setIsLoading(false);
+    if (!email || !password) {
+      setErrorMessage("Please enter both email and password.");
+      return;
     }
+
+    setIsSubmitting(true);
+    const res = await login({ email, password });
+
+    if (res.success) {
+      router.push("/");
+    } else {
+      setErrorMessage(res.error || "Invalid credentials. Please try again.");
+    }
+    setIsSubmitting(false);
+  };
+
+  const handleDemoLogin = async () => {
+    setErrorMessage(null);
+    setIsSubmitting(true);
+    await loginWithDemoAdmin();
+    router.push("/");
+    setIsSubmitting(false);
   };
 
   const handleGoogleClick = async () => {
-    setIsGoogleLoading(true);
     setErrorMessage(null);
+    setIsGoogleLoading(true);
     try {
       await loginWithGoogle();
     } catch {
-      setErrorMessage("Google Sign-In failed. Please try Admin Login.");
+      setErrorMessage("Failed to initiate Google sign in.");
       setIsGoogleLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen w-full flex items-center justify-center bg-barber-dark px-4 py-12 select-none">
+    <div className="min-h-screen w-full flex items-center justify-center bg-gradient-to-br from-slate-100 via-stone-50 to-amber-50/40 px-4 py-12 select-none">
       <div className="max-w-sm w-full">
         {/* Brand Header */}
         <div className="text-center mb-8">
-          <h1 className="text-xl font-bold tracking-widest text-white uppercase font-mono mb-2">
+          <h1 className="text-2xl font-bold tracking-widest bg-gradient-to-r from-slate-900 via-stone-800 to-amber-700 bg-clip-text text-transparent uppercase font-mono mb-2">
             THE BARBER SHOP
           </h1>
-          <p className="text-xs text-zinc-400">
-            Queue and Chat Console
+          <p className="text-xs text-slate-500 font-medium">
+            Queue & Live Chat Console
           </p>
         </div>
 
         {/* Card Container */}
-        <div className="bg-barber-card border border-barber-border rounded-xl p-7 shadow-xl">
+        <div className="bg-white/95 backdrop-blur-md border border-slate-200/90 rounded-2xl p-7 shadow-xl shadow-slate-200/50">
           {/* Google Sign-In Button */}
           <div className="mb-5">
             <button
               type="button"
               onClick={handleGoogleClick}
               disabled={isGoogleLoading}
-              className="w-full flex items-center justify-center gap-3 py-2.5 px-4 rounded-lg bg-zinc-900 hover:bg-zinc-800 text-white text-xs font-medium transition border border-zinc-700 disabled:opacity-50 cursor-pointer"
+              className="w-full flex items-center justify-center gap-3 py-2.5 px-4 rounded-xl bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold transition border border-slate-200 shadow-xs disabled:opacity-50 cursor-pointer"
             >
               <svg className="w-4 h-4" viewBox="0 0 24 24">
                 <path
@@ -86,17 +102,17 @@ export default function LoginPage() {
 
           {/* Divider */}
           <div className="relative flex py-2 items-center mb-5">
-            <div className="flex-grow border-t border-zinc-800"></div>
-            <span className="flex-shrink mx-3 text-[10px] uppercase tracking-wider text-zinc-500">
+            <div className="flex-grow border-t border-slate-200"></div>
+            <span className="flex-shrink mx-3 text-[10px] uppercase tracking-wider text-slate-400 font-semibold">
               or sign in with email
             </span>
-            <div className="flex-grow border-t border-zinc-800"></div>
+            <div className="flex-grow border-t border-slate-200"></div>
           </div>
 
           {/* Error Banner */}
           {errorMessage && (
-            <div className="mb-4 p-2.5 rounded-lg bg-red-950/40 border border-red-900/60 text-red-300 text-xs flex items-center gap-2">
-              <AlertCircle className="w-3.5 h-3.5 flex-shrink-0 text-red-400" />
+            <div className="mb-4 p-2.5 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs flex items-center gap-2">
+              <AlertCircle className="w-3.5 h-3.5 flex-shrink-0 text-red-500" />
               <span>{errorMessage}</span>
             </div>
           )}
@@ -104,38 +120,38 @@ export default function LoginPage() {
           {/* Credentials Form */}
           <form onSubmit={handleSubmit} className="space-y-3.5">
             <div>
-              <label className="block text-[11px] font-medium text-zinc-400 mb-1">
+              <label className="block text-[11px] font-semibold text-slate-600 mb-1">
                 Email
               </label>
               <div className="relative">
-                <Mail className="w-3.5 h-3.5 text-zinc-500 absolute left-3 top-1/2 -translate-y-1/2" />
+                <Mail className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
                 <input
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="admin@barberlounge.com"
-                  className="w-full pl-9 pr-3 py-2 bg-zinc-900 border border-zinc-800 rounded-lg text-xs text-white placeholder-zinc-600 focus:outline-none focus:border-zinc-500 transition"
+                  className="w-full pl-9 pr-3 py-2 bg-slate-50/60 border border-slate-200 rounded-xl text-xs text-slate-900 placeholder-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition"
                 />
               </div>
             </div>
 
             <div>
-              <label className="block text-[11px] font-medium text-zinc-400 mb-1">
+              <label className="block text-[11px] font-semibold text-slate-600 mb-1">
                 Password
               </label>
               <div className="relative">
-                <Lock className="w-3.5 h-3.5 text-zinc-500 absolute left-3 top-1/2 -translate-y-1/2" />
+                <Lock className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
                 <input
                   type={showPassword ? "text" : "password"}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
-                  className="w-full pl-9 pr-9 py-2 bg-zinc-900 border border-zinc-800 rounded-lg text-xs text-white placeholder-zinc-600 focus:outline-none focus:border-zinc-500 transition"
+                  className="w-full pl-9 pr-9 py-2 bg-slate-50/60 border border-slate-200 rounded-xl text-xs text-slate-900 placeholder-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-zinc-300"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
                 >
                   {showPassword ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
                 </button>
@@ -144,22 +160,22 @@ export default function LoginPage() {
 
             <button
               type="submit"
-              disabled={isLoading}
-              className="w-full mt-2 py-2 px-4 rounded-lg bg-white hover:bg-zinc-200 text-zinc-950 font-medium text-xs transition flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"
+              disabled={isSubmitting}
+              className="w-full mt-2 py-2.5 px-4 rounded-xl bg-gradient-to-r from-slate-900 via-zinc-800 to-amber-900 hover:from-slate-800 hover:to-amber-800 text-white text-xs font-semibold shadow-sm transition disabled:opacity-50 cursor-pointer"
             >
-              <span>{isLoading ? "Signing in..." : "Sign In"}</span>
-              <ArrowRight className="w-3.5 h-3.5" />
+              {isSubmitting ? "Signing in..." : "Sign In to Console"}
             </button>
           </form>
 
-          {/* Quick Admin Access */}
-          <div className="mt-5 pt-4 border-t border-zinc-800 text-center">
+          {/* Quick Demo Login */}
+          <div className="mt-5 pt-4 border-t border-slate-100 text-center">
+            <p className="text-[11px] text-slate-500 mb-2">Need quick demo access?</p>
             <button
               type="button"
-              onClick={loginWithDemoAdmin}
-              className="w-full py-2 px-3 rounded-lg bg-zinc-900 hover:bg-zinc-800/80 border border-zinc-700/60 text-zinc-300 hover:text-white font-medium text-xs transition cursor-pointer"
+              onClick={handleDemoLogin}
+              className="text-xs font-semibold text-amber-700 bg-amber-50 hover:bg-amber-100/80 border border-amber-200 py-1.5 px-3 rounded-xl transition cursor-pointer"
             >
-              Quick Admin Login (Demo)
+              Instant Demo Admin Login
             </button>
           </div>
         </div>

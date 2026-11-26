@@ -5,7 +5,6 @@ import {
   Send,
   User,
   RotateCw,
-  Play,
   Check,
   CheckCheck,
   AlertCircle,
@@ -68,13 +67,18 @@ export default function ChatWindow({
 
   if (!phone) {
     return (
-      <div className={cn("hidden md:flex flex-1 h-full flex-col items-center justify-center bg-[#F0F2F5] select-none p-6 text-center", className)}>
-        <div className="w-20 h-20 rounded-full bg-emerald-100/70 text-emerald-700 flex items-center justify-center mb-4 shadow-inner">
-          <MessageCircle className="w-10 h-10" />
+      <div
+        className={cn(
+          "hidden md:flex flex-1 h-full flex-col items-center justify-center bg-gradient-to-br from-slate-50 via-stone-50 to-amber-50/40 select-none p-6 text-center",
+          className
+        )}
+      >
+        <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-amber-100 to-amber-200 text-amber-700 flex items-center justify-center mb-3 shadow-xs">
+          <MessageCircle className="w-8 h-8" />
         </div>
-        <h2 className="text-xl font-bold text-gray-800">WhatsApp Live Chat Inbox</h2>
-        <p className="text-sm text-gray-500 max-w-md mt-2">
-          Select a customer conversation from the left sidebar to view WhatsApp messages, send human advisor replies, or monitor lead conversations.
+        <h2 className="text-lg font-bold text-slate-800">WhatsApp Live Chat Inbox</h2>
+        <p className="text-xs text-slate-500 max-w-sm mt-1.5 leading-relaxed">
+          Select a customer conversation from the left sidebar to view WhatsApp messages, send advisor replies, or manage client questions.
         </p>
       </div>
     );
@@ -122,21 +126,21 @@ export default function ChatWindow({
   };
 
   return (
-    <div className={cn("flex-1 h-full flex flex-col bg-[#EFEAE2] overflow-hidden w-full", className)}>
+    <div className={cn("flex-1 h-full flex flex-col bg-slate-100 overflow-hidden w-full", className)}>
       {/* Contact Header */}
-      <div className="bg-[#F0F2F5] px-3 sm:px-4 py-2.5 flex items-center justify-between border-b border-[#E9EDEF] z-10 shadow-xs">
+      <div className="bg-white/95 backdrop-blur-md px-3 sm:px-4 py-2.5 flex items-center justify-between border-b border-slate-200 z-10 shadow-xs">
         <div className="flex items-center space-x-2 sm:space-x-3 min-w-0">
           {onBack && (
             <button
               onClick={onBack}
-              className="md:hidden p-1.5 -ml-1 text-gray-600 hover:text-gray-900 hover:bg-gray-200 rounded-full transition flex-shrink-0"
+              className="md:hidden p-1.5 -ml-1 text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-full transition flex-shrink-0"
               title="Back to conversations"
               aria-label="Back to conversations"
             >
               <ArrowLeft className="w-5 h-5" />
             </button>
           )}
-          <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-emerald-800 text-white flex items-center justify-center font-bold text-sm shadow-sm flex-shrink-0">
+          <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-gradient-to-br from-amber-600 via-amber-700 to-amber-800 text-white flex items-center justify-center font-bold text-xs shadow-xs flex-shrink-0">
             {senderName
               ? senderName
                   .split(" ")
@@ -147,10 +151,10 @@ export default function ChatWindow({
               : <User className="w-5 h-5" />}
           </div>
           <div className="min-w-0">
-            <h3 className="font-semibold text-gray-900 text-sm flex items-center gap-1.5 truncate">
+            <h3 className="font-semibold text-slate-900 text-xs sm:text-sm flex items-center gap-1.5 truncate">
               <span className="truncate">{senderName || formatPhoneNumber(phone)}</span>
             </h3>
-            <p className="text-xs text-gray-500 font-mono truncate">
+            <p className="text-[11px] text-slate-500 font-mono truncate">
               {formatPhoneNumber(phone)}
             </p>
           </div>
@@ -163,9 +167,9 @@ export default function ChatWindow({
             onClick={handleResumeBot}
             disabled={isResumingBot}
             title="Resume automated AI assistant flow"
-            className="flex items-center space-x-1 sm:space-x-1.5 px-2.5 sm:px-3 py-1.5 bg-white border border-gray-300 text-gray-700 hover:bg-emerald-50 hover:text-emerald-700 hover:border-emerald-300 rounded-md text-xs font-medium shadow-2xs transition"
+            className="flex items-center space-x-1 sm:space-x-1.5 px-2.5 sm:px-3 py-1.5 bg-white border border-slate-200 text-slate-700 hover:bg-amber-50 hover:text-amber-700 hover:border-amber-200 rounded-xl text-xs font-medium shadow-2xs transition"
           >
-            <Bot className="w-3.5 h-3.5 text-emerald-600 flex-shrink-0" />
+            <Bot className="w-3.5 h-3.5 text-amber-600 flex-shrink-0" />
             <span>{isResumingBot ? "Resuming..." : "Resume Bot"}</span>
           </button>
 
@@ -174,8 +178,8 @@ export default function ChatWindow({
             onClick={onRefresh}
             title="Refresh chat messages"
             className={cn(
-              "p-1.5 sm:p-2 text-gray-600 hover:text-emerald-700 hover:bg-gray-200 rounded-full transition",
-              isLoading && "animate-spin text-emerald-600"
+              "p-1.5 sm:p-2 text-slate-500 hover:text-amber-700 hover:bg-slate-100 rounded-xl transition",
+              isLoading && "animate-spin text-amber-600"
             )}
           >
             <RotateCw className="w-4 h-4" />
@@ -208,8 +212,8 @@ export default function ChatWindow({
       <div className="flex-1 overflow-y-auto p-4 space-y-2.5 wa-chat-bg">
         {messages.length === 0 ? (
           <div className="h-full flex items-center justify-center">
-            <div className="bg-white/90 backdrop-blur-xs px-4 py-2 rounded-lg shadow-sm border border-gray-200 text-xs text-gray-600 text-center max-w-sm">
-              <Sparkles className="w-4 h-4 text-emerald-600 mx-auto mb-1" />
+            <div className="bg-white/90 backdrop-blur-xs px-4 py-2.5 rounded-xl shadow-xs border border-slate-200 text-xs text-slate-600 text-center max-w-sm">
+              <Sparkles className="w-4 h-4 text-amber-600 mx-auto mb-1" />
               No message history for this contact yet. Send a direct message below to start the conversation.
             </div>
           </div>
@@ -227,15 +231,15 @@ export default function ChatWindow({
               >
                 <div
                   className={cn(
-                    "px-3.5 py-2 rounded-lg shadow-xs text-sm text-gray-900 break-words relative",
+                    "px-3.5 py-2 rounded-xl shadow-xs text-xs sm:text-sm text-slate-900 break-words relative",
                     isOutbound
-                      ? "bg-[#D9FDD3] rounded-tr-none"
-                      : "bg-white rounded-tl-none border border-black/5"
+                      ? "bg-[#D9FDD3] rounded-tr-none border border-emerald-200/50"
+                      : "bg-white rounded-tl-none border border-slate-200"
                   )}
                 >
                   {/* Sender Name for Inbound */}
                   {!isOutbound && msg.sender_name && (
-                    <p className="text-[11px] font-semibold text-emerald-800 mb-0.5">
+                    <p className="text-[11px] font-bold text-amber-800 mb-0.5">
                       {msg.sender_name}
                     </p>
                   )}
@@ -243,18 +247,18 @@ export default function ChatWindow({
                   {/* Message Body */}
                   <div className="whitespace-pre-wrap leading-relaxed select-text">
                     {msg.text || (
-                      <span className="italic text-gray-500">[{msg.type} message]</span>
+                      <span className="italic text-slate-500">[{msg.type} message]</span>
                     )}
                   </div>
 
                   {/* Metadata / Time / Status Footer */}
-                  <div className="flex items-center justify-end space-x-1 mt-1 text-[10px] text-gray-500 select-none">
+                  <div className="flex items-center justify-end space-x-1 mt-1 text-[10px] text-slate-500 select-none">
                     <span>{formatBubbleTime(msg.timestamp)}</span>
                     {isOutbound && (
                       <span className="ml-1">
-                        {msg.status === "sent" && <Check className="w-3 h-3 text-gray-400" />}
+                        {msg.status === "sent" && <Check className="w-3 h-3 text-slate-400" />}
                         {msg.status === "delivered" && (
-                          <CheckCheck className="w-3 h-3 text-gray-400" />
+                          <CheckCheck className="w-3 h-3 text-slate-400" />
                         )}
                         {msg.status === "read" && (
                           <CheckCheck className="w-3.5 h-3.5 text-[#53bdeb]" />
@@ -263,7 +267,7 @@ export default function ChatWindow({
                           <AlertCircle className="w-3 h-3 text-red-500" />
                         )}
                         {!["sent", "delivered", "read", "failed"].includes(msg.status) && (
-                          <Check className="w-3 h-3 text-gray-400" />
+                          <Check className="w-3 h-3 text-slate-400" />
                         )}
                       </span>
                     )}
@@ -277,15 +281,15 @@ export default function ChatWindow({
       </div>
 
       {/* Canned Responses Pills */}
-      <div className="bg-[#F0F2F5] px-3 pt-2 pb-1 flex items-center space-x-2 overflow-x-auto no-scrollbar border-t border-[#E9EDEF]">
-        <span className="text-[11px] text-gray-500 font-medium whitespace-nowrap pl-1">
+      <div className="bg-white px-3 pt-2 pb-1.5 flex items-center space-x-2 overflow-x-auto no-scrollbar border-t border-slate-200">
+        <span className="text-[11px] text-slate-500 font-medium whitespace-nowrap pl-1">
           Quick replies:
         </span>
         {CANNED_RESPONSES.map((txt, idx) => (
           <button
             key={idx}
             onClick={() => setInputText(txt)}
-            className="text-xs bg-white hover:bg-emerald-50 text-gray-700 hover:text-emerald-800 px-2.5 py-1 rounded-full border border-gray-200 whitespace-nowrap transition flex-shrink-0"
+            className="text-xs bg-slate-50 hover:bg-amber-50 text-slate-700 hover:text-amber-800 px-2.5 py-1 rounded-full border border-slate-200 hover:border-amber-200 whitespace-nowrap transition flex-shrink-0 font-medium"
           >
             {txt.slice(0, 32)}...
           </button>
@@ -293,7 +297,7 @@ export default function ChatWindow({
       </div>
 
       {/* Message Composer */}
-      <div className="bg-[#F0F2F5] p-3 flex items-end space-x-2">
+      <div className="bg-white p-3 flex items-end space-x-2 border-t border-slate-100">
         <textarea
           rows={1}
           placeholder="Type a message (Enter to send, Shift+Enter for new line)..."
@@ -301,23 +305,23 @@ export default function ChatWindow({
           onChange={(e) => setInputText(e.target.value)}
           onKeyDown={handleKeyDown}
           disabled={isSending}
-          className="flex-1 bg-white border border-gray-300 rounded-2xl px-4 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 resize-none max-h-32 min-h-[42px]"
+          className="flex-1 bg-slate-50 border border-slate-200 rounded-2xl px-4 py-2 text-sm text-slate-900 placeholder-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 resize-none max-h-32 min-h-[42px] transition"
         />
 
         <button
           onClick={() => handleSendMessage()}
           disabled={!inputText.trim() || isSending}
           className={cn(
-            "w-11 h-11 rounded-full flex items-center justify-center transition shadow-sm flex-shrink-0",
+            "w-10 h-10 rounded-full flex items-center justify-center transition shadow-xs flex-shrink-0",
             inputText.trim() && !isSending
-              ? "bg-[#00A884] text-white hover:bg-[#008f6f]"
-              : "bg-gray-300 text-gray-500 cursor-not-allowed"
+              ? "bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-500 hover:to-amber-600 text-white cursor-pointer"
+              : "bg-slate-200 text-slate-400 cursor-not-allowed"
           )}
         >
           {isSending ? (
-            <RotateCw className="w-5 h-5 animate-spin" />
+            <RotateCw className="w-4 h-4 animate-spin" />
           ) : (
-            <Send className="w-5 h-5 ml-0.5" />
+            <Send className="w-4 h-4 ml-0.5" />
           )}
         </button>
       </div>

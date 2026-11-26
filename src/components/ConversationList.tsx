@@ -47,7 +47,7 @@ export default function ConversationList({
     return nameMatch || phoneMatch || messageMatch;
   });
 
-  const handleCreateNewChat = (e: React.FormEvent) => {
+  const handleStartChatSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const cleaned = newChatPhone.replace(/\D/g, "");
     if (!cleaned || cleaned.length < 8) {
@@ -61,12 +61,17 @@ export default function ConversationList({
   };
 
   return (
-    <div className={cn("w-full md:w-80 lg:w-96 h-full flex flex-col bg-white border-r border-[#E9EDEF] select-none flex-shrink-0", className)}>
+    <div
+      className={cn(
+        "w-full md:w-80 lg:w-96 h-full flex flex-col bg-white border-r border-slate-200 select-none flex-shrink-0 shadow-xs",
+        className
+      )}
+    >
       {/* Header bar */}
-      <div className="bg-[#F0F2F5] px-4 py-3 flex items-center justify-between border-b border-[#E9EDEF]">
+      <div className="bg-gradient-to-r from-slate-50 via-white to-slate-50 px-4 py-3 flex items-center justify-between border-b border-slate-200">
         <div className="flex items-center space-x-2">
-          <h2 className="font-semibold text-gray-800 text-lg">Chats</h2>
-          <span className="bg-gray-200 text-gray-700 text-xs px-2 py-0.5 rounded-full font-medium">
+          <h2 className="font-bold text-slate-900 text-base">Chats</h2>
+          <span className="bg-slate-100 text-slate-700 text-xs px-2 py-0.5 rounded-full font-semibold border border-slate-200">
             {conversations.length}
           </span>
         </div>
@@ -75,17 +80,17 @@ export default function ConversationList({
           <button
             onClick={() => setShowNewChatModal(true)}
             title="Start new chat with phone number"
-            className="p-2 text-gray-600 hover:text-emerald-700 hover:bg-gray-200 rounded-full transition"
+            className="p-2 text-slate-600 hover:text-amber-700 hover:bg-amber-50 rounded-xl transition"
           >
-            <Plus className="w-5 h-5" />
+            <Plus className="w-4 h-4" />
           </button>
 
           <button
             onClick={onRefresh}
             title="Refresh conversations"
             className={cn(
-              "p-2 text-gray-600 hover:text-emerald-700 hover:bg-gray-200 rounded-full transition",
-              isLoading && "animate-spin text-emerald-600"
+              "p-2 text-slate-600 hover:text-amber-700 hover:bg-amber-50 rounded-xl transition",
+              isLoading && "animate-spin text-amber-600"
             )}
           >
             <RotateCw className="w-4 h-4" />
@@ -94,20 +99,20 @@ export default function ConversationList({
       </div>
 
       {/* Search Bar */}
-      <div className="p-2.5 bg-white border-b border-[#E9EDEF]">
-        <div className="relative flex items-center bg-[#F0F2F5] rounded-lg px-3 py-1.5 focus-within:ring-2 focus-within:ring-emerald-500/30">
-          <Search className="w-4 h-4 text-gray-400 mr-2 flex-shrink-0" />
+      <div className="p-2.5 bg-white border-b border-slate-100">
+        <div className="relative flex items-center bg-slate-50 border border-slate-200 rounded-xl px-3 py-1.5 focus-within:bg-white focus-within:ring-2 focus-within:ring-amber-500/20 focus-within:border-amber-500 transition">
+          <Search className="w-3.5 h-3.5 text-slate-400 mr-2 flex-shrink-0" />
           <input
             type="text"
             placeholder="Search by name, number, or text..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full bg-transparent text-sm text-gray-800 placeholder-gray-400 focus:outline-none"
+            className="w-full bg-transparent text-xs text-slate-800 placeholder-slate-400 focus:outline-none"
           />
           {searchQuery && (
             <button
               onClick={() => setSearchQuery("")}
-              className="text-gray-400 hover:text-gray-600 ml-1"
+              className="text-slate-400 hover:text-slate-600 ml-1"
             >
               <X className="w-3.5 h-3.5" />
             </button>
@@ -116,40 +121,40 @@ export default function ConversationList({
       </div>
 
       {/* Conversation Items List */}
-      <div className="flex-1 overflow-y-auto divide-y divide-gray-100">
+      <div className="flex-1 overflow-y-auto divide-y divide-slate-100">
         {isLoading && conversations.length === 0 ? (
           <div className="p-4 space-y-4">
             {[1, 2, 3, 4].map((i) => (
               <div key={i} className="flex items-center space-x-3 animate-pulse">
-                <div className="w-12 h-12 bg-gray-200 rounded-full flex-shrink-0" />
+                <div className="w-11 h-11 bg-slate-100 rounded-full flex-shrink-0" />
                 <div className="flex-1 space-y-2">
-                  <div className="h-4 bg-gray-200 rounded w-1/2" />
-                  <div className="h-3 bg-gray-100 rounded w-3/4" />
+                  <div className="h-4 bg-slate-100 rounded w-1/2" />
+                  <div className="h-3 bg-slate-50 rounded w-3/4" />
                 </div>
               </div>
             ))}
           </div>
         ) : filteredConversations.length === 0 ? (
-          <div className="p-8 text-center text-gray-500">
+          <div className="p-8 text-center text-slate-500">
             {searchQuery ? (
               <>
-                <p className="text-sm font-medium">No results found</p>
-                <p className="text-xs text-gray-400 mt-1">
+                <p className="text-sm font-medium text-slate-700">No results found</p>
+                <p className="text-xs text-slate-400 mt-1">
                   No conversation matches &quot;{searchQuery}&quot;
                 </p>
               </>
             ) : (
               <>
-                <div className="w-12 h-12 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center mx-auto mb-3">
+                <div className="w-12 h-12 rounded-2xl bg-amber-50 text-amber-700 flex items-center justify-center mx-auto mb-3 border border-amber-200/60 shadow-xs">
                   <User className="w-6 h-6" />
                 </div>
-                <p className="text-sm font-semibold text-gray-700">No chats yet</p>
-                <p className="text-xs text-gray-400 mt-1">
+                <p className="text-sm font-semibold text-slate-800">No chats yet</p>
+                <p className="text-xs text-slate-400 mt-1">
                   Inbound customer WhatsApp messages will appear here live.
                 </p>
                 <button
                   onClick={() => setShowNewChatModal(true)}
-                  className="mt-4 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium rounded-md shadow-sm transition inline-flex items-center gap-1.5"
+                  className="mt-4 px-3.5 py-1.5 bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-500 hover:to-amber-600 text-white text-xs font-semibold rounded-xl shadow-xs transition inline-flex items-center gap-1.5"
                 >
                   <Plus className="w-3.5 h-3.5" /> Start First Chat
                 </button>
@@ -173,28 +178,28 @@ export default function ConversationList({
                 key={c.phone_number}
                 onClick={() => onSelectConversation(c.phone_number)}
                 className={cn(
-                  "flex items-center px-3.5 py-3 cursor-pointer transition hover:bg-[#F5F6F6] select-none",
-                  isSelected && "bg-[#EBECEE] hover:bg-[#EBECEE]"
+                  "flex items-center px-3.5 py-3 cursor-pointer transition select-none hover:bg-slate-50/80",
+                  isSelected && "bg-gradient-to-r from-amber-50/80 via-white to-white border-l-4 border-l-amber-600 shadow-2xs"
                 )}
               >
                 {/* Avatar */}
-                <div className="w-12 h-12 rounded-full bg-emerald-700 text-white flex items-center justify-center font-semibold text-sm flex-shrink-0 shadow-sm">
-                  {initials ? initials : <User className="w-6 h-6" />}
+                <div className="w-11 h-11 rounded-full bg-gradient-to-br from-amber-600 via-amber-700 to-amber-800 text-white flex items-center justify-center font-bold text-xs flex-shrink-0 shadow-xs">
+                  {initials ? initials : <User className="w-5 h-5" />}
                 </div>
 
                 {/* Details */}
                 <div className="ml-3 flex-1 min-w-0">
                   <div className="flex items-center justify-between mb-0.5">
-                    <h3 className="text-sm font-semibold text-gray-900 truncate">
+                    <h3 className="text-xs font-semibold text-slate-900 truncate">
                       {c.sender_name || formatPhoneNumber(c.phone_number)}
                     </h3>
-                    <span className="text-[11px] text-gray-400 font-normal whitespace-nowrap ml-2">
+                    <span className="text-[10px] text-slate-400 font-medium whitespace-nowrap ml-2">
                       {formatConversationTime(c.last_timestamp)}
                     </span>
                   </div>
 
                   <div className="flex items-center justify-between">
-                    <div className="flex items-center text-xs text-gray-500 truncate mr-2">
+                    <div className="flex items-center text-xs text-slate-500 truncate mr-2">
                       {c.last_direction === "outbound" && (
                         <CheckCheck className="w-3.5 h-3.5 text-blue-500 mr-1 flex-shrink-0" />
                       )}
@@ -202,17 +207,11 @@ export default function ConversationList({
                     </div>
 
                     {c.unread_count > 0 && (
-                      <span className="bg-emerald-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full min-w-[18px] text-center">
+                      <span className="bg-gradient-to-r from-amber-500 to-amber-600 text-white text-[10px] font-bold px-1.5 py-0.2 rounded-full min-w-[18px] text-center shadow-xs">
                         {c.unread_count}
                       </span>
                     )}
                   </div>
-
-                  {c.sender_name && (
-                    <p className="text-[11px] text-gray-400 truncate mt-0.5">
-                      {formatPhoneNumber(c.phone_number)}
-                    </p>
-                  )}
                 </div>
               </div>
             );
@@ -222,58 +221,60 @@ export default function ConversationList({
 
       {/* New Chat Modal */}
       {showNewChatModal && (
-        <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-xl shadow-xl max-w-sm w-full p-5 border border-gray-100">
-            <div className="flex items-center justify-between pb-3 border-b border-gray-100">
+        <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white border border-slate-200 rounded-2xl w-full max-w-sm p-5 shadow-2xl overflow-hidden animate-fade-in">
+            <div className="flex items-center justify-between mb-3 border-b border-slate-100 pb-3">
               <div className="flex items-center space-x-2">
-                <div className="w-8 h-8 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center">
+                <div className="w-8 h-8 rounded-xl bg-amber-50 text-amber-700 flex items-center justify-center">
                   <PhoneCall className="w-4 h-4" />
                 </div>
-                <h3 className="font-semibold text-gray-800">New WhatsApp Chat</h3>
+                <h3 className="font-bold text-slate-900 text-sm">Start Direct WhatsApp Chat</h3>
               </div>
               <button
                 onClick={() => {
                   setShowNewChatModal(false);
                   setNewChatError("");
                 }}
-                className="text-gray-400 hover:text-gray-600"
+                className="text-slate-400 hover:text-slate-600 p-1"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
 
-            <form onSubmit={handleCreateNewChat} className="mt-4 space-y-4">
-              <div>
-                <label className="block text-xs font-medium text-gray-700 mb-1">
-                  Recipient Phone Number (with Country Code)
-                </label>
-                <input
-                  type="text"
-                  placeholder="e.g. 919876543210"
-                  value={newChatPhone}
-                  onChange={(e) => setNewChatPhone(e.target.value)}
-                  autoFocus
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none"
-                />
-                <p className="text-[11px] text-gray-400 mt-1">
-                  Include country code without &apos;+&apos; (e.g. 91 for India).
-                </p>
-                {newChatError && (
-                  <p className="text-xs text-red-500 mt-1.5">{newChatError}</p>
-                )}
-              </div>
+            <form onSubmit={handleStartChatSubmit}>
+              <p className="text-xs text-slate-500 mb-3">
+                Enter customer phone number with country code (e.g. 919876543210 for India).
+              </p>
 
-              <div className="flex items-center justify-end space-x-2 pt-2">
+              {newChatError && (
+                <div className="mb-3 p-2 bg-red-50 border border-red-200 rounded-xl text-red-700 text-xs">
+                  {newChatError}
+                </div>
+              )}
+
+              <input
+                type="text"
+                placeholder="e.g. 919876543210"
+                value={newChatPhone}
+                onChange={(e) => setNewChatPhone(e.target.value)}
+                autoFocus
+                className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 placeholder-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 mb-4"
+              />
+
+              <div className="flex justify-end space-x-2">
                 <button
                   type="button"
-                  onClick={() => setShowNewChatModal(false)}
-                  className="px-3 py-1.5 text-xs text-gray-600 hover:bg-gray-100 rounded-lg transition"
+                  onClick={() => {
+                    setShowNewChatModal(false);
+                    setNewChatError("");
+                  }}
+                  className="px-3 py-1.5 text-xs text-slate-600 hover:bg-slate-100 rounded-xl border border-slate-200 transition"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold rounded-lg shadow-sm transition"
+                  className="px-4 py-1.5 text-xs font-semibold text-white bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-500 hover:to-amber-600 rounded-xl shadow-xs transition"
                 >
                   Open Chat
                 </button>
