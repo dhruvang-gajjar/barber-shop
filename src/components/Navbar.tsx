@@ -15,48 +15,33 @@ import {
   Check,
   Building2,
   Plus,
+  ShieldCheck,
+  Smartphone,
+  Settings,
 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { useNotification } from "@/context/NotificationContext";
 import { useBusiness } from "@/context/BusinessContext";
+import ClientSetupModal from "@/components/ClientSetupModal";
 
 export default function Navbar() {
   const pathname = usePathname();
   const { logout, user } = useAuth();
   const { unreadCount, permission, requestPermission, isSupported } = useNotification();
-  const { activeBusiness, businesses, setActiveBusinessId, registerBusiness, canSwitchBusiness } = useBusiness();
+  const {
+    activeBusiness,
+    businesses,
+    setActiveBusinessId,
+    canSwitchBusiness,
+    isMasterAdmin,
+  } = useBusiness();
 
   const [isMobileDrawerOpen, setIsMobileDrawerOpen] = useState(false);
   const [showBizDropdown, setShowBizDropdown] = useState(false);
-  const [showAddBizModal, setShowAddBizModal] = useState(false);
-
-  // New Business Form State
-  const [newBizName, setNewBizName] = useState("");
-  const [newBizTagline, setNewBizTagline] = useState("");
-  const [newBizPhone, setNewBizPhone] = useState("");
-  const [newBizCity, setNewBizCity] = useState("");
+  const [showClientSetupModal, setShowClientSetupModal] = useState(false);
 
   const isQueue = pathname === "/";
   const isChat = pathname === "/chat";
-
-  const handleCreateBusiness = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newBizName.trim()) return;
-
-    registerBusiness({
-      name: newBizName.trim(),
-      tagline: newBizTagline.trim() || "Salon & Barber Lounge",
-      phone: newBizPhone.trim() || "+91 98000 00000",
-      city: newBizCity.trim() || "India",
-    });
-
-    setNewBizName("");
-    setNewBizTagline("");
-    setNewBizPhone("");
-    setNewBizCity("");
-    setShowAddBizModal(false);
-    setShowBizDropdown(false);
-  };
 
   return (
     <>
@@ -142,16 +127,21 @@ export default function Navbar() {
               </div>
 
               {/* Add New Business Action */}
-              <div className="pt-1.5 border-t border-slate-100">
-                <button
-                  type="button"
-                  onClick={() => setShowAddBizModal(true)}
-                  className="w-full flex items-center justify-center space-x-1.5 px-3 py-1.5 text-xs font-semibold text-amber-800 bg-amber-50/60 hover:bg-amber-100/70 border border-amber-200/60 rounded-xl transition cursor-pointer"
-                >
-                  <Plus className="w-3.5 h-3.5" />
-                  <span>Register Client Business</span>
-                </button>
-              </div>
+              {isMasterAdmin && (
+                <div className="pt-1.5 border-t border-slate-100">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowBizDropdown(false);
+                      setShowClientSetupModal(true);
+                    }}
+                    className="w-full flex items-center justify-center space-x-1.5 px-3 py-1.5 text-xs font-semibold text-amber-800 bg-amber-50/60 hover:bg-amber-100/70 border border-amber-200/60 rounded-xl transition cursor-pointer"
+                  >
+                    <Plus className="w-3.5 h-3.5" />
+                    <span>Setup Clients & WhatsApp</span>
+                  </button>
+                </div>
+              )}
             </div>
           )}
         </div>
@@ -188,6 +178,18 @@ export default function Navbar() {
               </span>
             )}
           </Link>
+
+          {/* Master Admin Client & WhatsApp Setup */}
+          {isMasterAdmin && (
+            <button
+              type="button"
+              onClick={() => setShowClientSetupModal(true)}
+              className="w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold text-slate-700 hover:text-amber-900 hover:bg-amber-50/80 transition cursor-pointer"
+            >
+              <Settings className="w-4 h-4 text-amber-600 flex-shrink-0" />
+              <span>Client Setup & Numbers</span>
+            </button>
+          )}
 
           {/* Desktop Push Alerts Status & Prompt */}
           {isSupported && (
@@ -387,6 +389,20 @@ export default function Navbar() {
                   </span>
                 )}
               </Link>
+
+              {isMasterAdmin && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsMobileDrawerOpen(false);
+                    setShowClientSetupModal(true);
+                  }}
+                  className="w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold text-slate-700 hover:text-amber-900 hover:bg-amber-50/80 transition cursor-pointer"
+                >
+                  <Settings className="w-4 h-4 text-amber-600" />
+                  <span>Client Setup & Numbers</span>
+                </button>
+              )}
             </nav>
 
             {/* Drawer Footer */}
@@ -418,107 +434,11 @@ export default function Navbar() {
         </div>
       )}
 
-      {/* ================================================================= */}
-      {/* REGISTER NEW CLIENT BUSINESS MODAL                                */}
-      {/* ================================================================= */}
-      {showAddBizModal && (
-        <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white border border-slate-200 rounded-2xl w-full max-w-md p-5 shadow-2xl overflow-hidden animate-fade-in">
-            <div className="flex items-center justify-between mb-4 border-b border-slate-100 pb-3">
-              <div className="flex items-center space-x-2.5">
-                <div className="w-8 h-8 rounded-xl bg-amber-50 text-amber-700 flex items-center justify-center">
-                  <Building2 className="w-4 h-4" />
-                </div>
-                <h3 className="font-bold text-slate-900 text-sm">Register New Client Business</h3>
-              </div>
-              <button
-                type="button"
-                onClick={() => setShowAddBizModal(false)}
-                className="text-slate-400 hover:text-slate-600 p-1"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-
-            <form onSubmit={handleCreateBusiness} className="space-y-3">
-              <p className="text-xs text-slate-500">
-                Register a new salon or barber shop to manage under this dashboard without needing a separate deployment.
-              </p>
-
-              <div>
-                <label className="block text-[11px] font-semibold text-slate-600 mb-1">
-                  Business Name *
-                </label>
-                <input
-                  type="text"
-                  required
-                  placeholder="e.g. Vintage Blade Barbers"
-                  value={newBizName}
-                  onChange={(e) => setNewBizName(e.target.value)}
-                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 placeholder-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500"
-                />
-              </div>
-
-              <div>
-                <label className="block text-[11px] font-semibold text-slate-600 mb-1">
-                  Tagline / Specialization
-                </label>
-                <input
-                  type="text"
-                  placeholder="e.g. Classic Shave & Beard Styling"
-                  value={newBizTagline}
-                  onChange={(e) => setNewBizTagline(e.target.value)}
-                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 placeholder-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500"
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-[11px] font-semibold text-slate-600 mb-1">
-                    WhatsApp Phone
-                  </label>
-                  <input
-                    type="tel"
-                    placeholder="+91 98765 00000"
-                    value={newBizPhone}
-                    onChange={(e) => setNewBizPhone(e.target.value)}
-                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 placeholder-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-[11px] font-semibold text-slate-600 mb-1">
-                    City / Branch
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="e.g. Pune"
-                    value={newBizCity}
-                    onChange={(e) => setNewBizCity(e.target.value)}
-                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 placeholder-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500"
-                  />
-                </div>
-              </div>
-
-              <div className="flex justify-end space-x-2 pt-3 border-t border-slate-100">
-                <button
-                  type="button"
-                  onClick={() => setShowAddBizModal(false)}
-                  className="px-3 py-1.5 text-xs text-slate-600 hover:bg-slate-100 rounded-xl border border-slate-200 transition"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="px-4 py-1.5 text-xs font-semibold text-white bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-500 hover:to-amber-600 rounded-xl shadow-xs transition"
-                >
-                  Add Business
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
+      {/* Client Management & WhatsApp Numbers Setup Modal */}
+      <ClientSetupModal
+        isOpen={showClientSetupModal}
+        onClose={() => setShowClientSetupModal(false)}
+      />
     </>
   );
 }

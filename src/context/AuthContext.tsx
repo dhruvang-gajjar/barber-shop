@@ -34,12 +34,40 @@ const TOKEN_KEY = "barber_auth_token";
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const { data: nextAuthSession, status: nextAuthStatus } = useSession();
-  const [user, setUser] = useState<User | null>(null);
-  const [token, setToken] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-
   const router = useRouter();
   const pathname = usePathname();
+
+  const [token, setToken] = useState<string | null>(() => {
+    if (typeof window === "undefined") return null;
+    return localStorage.getItem(TOKEN_KEY);
+  });
+
+  const [user, setUser] = useState<User | null>(() => {
+    if (typeof window === "undefined") return null;
+    const storedToken = localStorage.getItem(TOKEN_KEY);
+    if (!storedToken) return null;
+    const storedEmail = localStorage.getItem("barber_auth_email");
+    const storedName = localStorage.getItem("barber_auth_name");
+    if (storedEmail) {
+      return {
+        id: storedToken.replace("demo_token_", "") || "user",
+        name: storedName || "Barber User",
+        email: storedEmail,
+        role: "admin",
+        created_at: Math.floor(Date.now() / 1000),
+        updated_at: Math.floor(Date.now() / 1000),
+      };
+    }
+    return null;
+  });
+
+  const [isLoading, setIsLoading] = useState<boolean>(() => {
+    if (typeof window === "undefined") return true;
+    const stored = localStorage.getItem(TOKEN_KEY);
+    // If no token exists in localStorage, user is immediately unauthenticated
+    if (!stored) return false;
+    return false;
+  });
 
   // Sync NextAuth Google session or Token authentication
   useEffect(() => {
@@ -220,6 +248,42 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       });
       router.replace("/");
       return { success: true };
+    }
+
+    // Check dynamic registered clients created by Admin
+    try {
+      if (typeof window !== "undefined") {
+        const storedCustom = localStorage.getItem("barber_custom_businesses");
+        if (storedCustom) {
+          const list = JSON.parse(storedCustom);
+          const found = list.find(
+            (c: any) =>
+              c.assignedEmail &&
+              c.assignedEmail.toLowerCase() === targetEmail &&
+              c.assignedPassword === credentials.password
+          );
+          if (found) {
+            const tokenId = `demo_token_${found.id}`;
+            localStorage.setItem(TOKEN_KEY, tokenId);
+            localStorage.setItem("barber_auth_email", found.assignedEmail);
+            localStorage.setItem("barber_auth_name", found.name);
+            localStorage.setItem("barber_active_business_id", found.id);
+            setToken(tokenId);
+            setUser({
+              id: found.id,
+              name: found.name,
+              email: found.assignedEmail,
+              role: "admin",
+              created_at: Math.floor(Date.now() / 1000),
+              updated_at: Math.floor(Date.now() / 1000),
+            });
+            router.replace("/");
+            return { success: true };
+          }
+        }
+      }
+    } catch {
+      // ignore
     }
 
     const res = await apiLogin(credentials);

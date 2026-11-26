@@ -12,10 +12,12 @@ import {
   Bot,
   MessageCircle,
   ArrowLeft,
+  Smartphone,
 } from "lucide-react";
 import type { StoredMessage } from "@/types";
 import { formatBubbleTime, formatPhoneNumber, cn } from "@/lib/utils";
 import { sendHumanMessage, resumeBotSession } from "@/lib/api";
+import { useBusiness } from "@/context/BusinessContext";
 
 interface ChatWindowProps {
   phone: string | null;
@@ -28,13 +30,6 @@ interface ChatWindowProps {
   className?: string;
 }
 
-const CANNED_RESPONSES = [
-  "Hello! How can we help you at THE BARBER SHOP today?",
-  "Your appointment is confirmed. See you soon!",
-  "Please let us know which services you'd like to book.",
-  "Thank you for visiting THE BARBER SHOP!",
-];
-
 export default function ChatWindow({
   phone,
   senderName,
@@ -45,6 +40,7 @@ export default function ChatWindow({
   onBack,
   className,
 }: ChatWindowProps) {
+  const { activeBusiness } = useBusiness();
   const [inputText, setInputText] = useState("");
   const [isSending, setIsSending] = useState(false);
   const [isResumingBot, setIsResumingBot] = useState(false);
@@ -52,6 +48,13 @@ export default function ChatWindow({
   const [sendError, setSendError] = useState<string | null>(null);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  const cannedResponses = [
+    `Hello! How can we help you at ${activeBusiness.name} today?`,
+    "Your appointment is confirmed. See you soon!",
+    "Please let us know which services you'd like to book.",
+    `Thank you for visiting ${activeBusiness.name}!`,
+  ];
 
   // Auto scroll to bottom when messages change or chat is selected
   useEffect(() => {
@@ -80,6 +83,12 @@ export default function ChatWindow({
         <p className="text-xs text-slate-500 max-w-sm mt-1.5 leading-relaxed">
           Select a customer conversation from the left sidebar to view WhatsApp messages, send advisor replies, or manage client questions.
         </p>
+        {activeBusiness.whatsappNumbers && activeBusiness.whatsappNumbers.length > 0 && (
+          <div className="mt-3 inline-flex items-center space-x-1.5 px-3 py-1 bg-amber-50 border border-amber-200/80 rounded-full text-xs text-amber-800 font-medium">
+            <Smartphone className="w-3.5 h-3.5" />
+            <span>Isolated to: {activeBusiness.whatsappNumbers.join(", ")}</span>
+          </div>
+        )}
       </div>
     );
   }
@@ -92,7 +101,8 @@ export default function ChatWindow({
     setIsSending(true);
     setSendError(null);
 
-    const res = await sendHumanMessage(phone, textToSend);
+    const fromNum = activeBusiness.whatsappNumbers?.[0];
+    const res = await sendHumanMessage(phone, textToSend, fromNum);
 
     if (res.success) {
       setInputText("");
@@ -285,7 +295,7 @@ export default function ChatWindow({
         <span className="text-[11px] text-slate-500 font-medium whitespace-nowrap pl-1">
           Quick replies:
         </span>
-        {CANNED_RESPONSES.map((txt, idx) => (
+        {cannedResponses.map((txt, idx) => (
           <button
             key={idx}
             onClick={() => setInputText(txt)}

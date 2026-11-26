@@ -71,3 +71,50 @@ export function formatPhoneNumber(phone: string): string {
   if (phone.startsWith("+")) return phone;
   return `+${phone}`;
 }
+
+/**
+ * Extracts digits only from a phone number string.
+ */
+export function normalizeDigits(phone?: string | null): string {
+  if (!phone) return "";
+  return phone.replace(/\D/g, "");
+}
+
+/**
+ * Checks if two phone numbers match (handling country code prefixes, e.g. +91 96014 75410 vs 9601475410).
+ */
+export function isPhoneMatch(a?: string | null, b?: string | null): boolean {
+  if (!a || !b) return false;
+  const digitsA = normalizeDigits(a);
+  const digitsB = normalizeDigits(b);
+  if (!digitsA || !digitsB) return false;
+
+  if (digitsA === digitsB) return true;
+
+  // Compare last 10 digits for full phone numbers
+  if (digitsA.length >= 7 && digitsB.length >= 7) {
+    const tailA = digitsA.slice(-10);
+    const tailB = digitsB.slice(-10);
+    if (tailA === tailB) return true;
+  }
+
+  // Suffix/prefix matching
+  if (digitsA.endsWith(digitsB) || digitsB.endsWith(digitsA)) {
+    return true;
+  }
+
+  return false;
+}
+
+/**
+ * Checks if a message/conversation candidate phone matches any of the tenant's WhatsApp numbers.
+ */
+export function matchesAnyBusinessNumber(
+  businessNumbers: string[] | undefined,
+  candidatePhone?: string | null
+): boolean {
+  if (!businessNumbers || businessNumbers.length === 0) return true;
+  if (!candidatePhone) return false;
+
+  return businessNumbers.some((bn) => isPhoneMatch(bn, candidatePhone));
+}

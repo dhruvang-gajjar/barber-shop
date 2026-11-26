@@ -7,6 +7,8 @@ import ChatWindow from "@/components/ChatWindow";
 import { fetchConversations, fetchMessages } from "@/lib/api";
 import { getPusherClient } from "@/lib/pusher";
 import { useNotification } from "@/context/NotificationContext";
+import { useBusiness } from "@/context/BusinessContext";
+import { matchesAnyBusinessNumber } from "@/lib/utils";
 import type { ConversationSummary, StoredMessage } from "@/types";
 
 function ChatInbox() {
@@ -14,6 +16,7 @@ function ChatInbox() {
   const searchParams = useSearchParams();
   const initialPhone = searchParams.get("phone");
   const { setUnreadCount } = useNotification();
+  const { activeBusiness } = useBusiness();
 
   const [conversations, setConversations] = useState<ConversationSummary[]>([]);
   const [selectedPhone, setSelectedPhone] = useState<string | null>(initialPhone);
@@ -29,7 +32,11 @@ function ChatInbox() {
     selectedPhoneRef.current = selectedPhone;
   }, [selectedPhone]);
 
-  const hasLoadedInitialConversations = useRef(false);
+  // Ref to active business whatsapp numbers to access inside pusher listener
+  const activeNumbersRef = useRef<string[]>(activeBusiness.whatsappNumbers || []);
+  useEffect(() => {
+    activeNumbersRef.current = activeBusiness.whatsappNumbers || [];
+  }, [activeBusiness.whatsappNumbers]);
 
   // Sync total unread count with Notification Context whenever conversations change
   useEffect(() => {
@@ -37,28 +44,50 @@ function ChatInbox() {
     setUnreadCount(total);
   }, [conversations, setUnreadCount]);
 
-  // Load conversations list from Cloudflare D1
-  const loadConversations = useCallback(async (showLoading = false, force = false) => {
-    if (showLoading) setIsLoadingConversations(true);
-    const list = await fetchConversations(force);
-    setConversations(list);
-    if (showLoading) setIsLoadingConversations(false);
-  }, []);
+  // Load conversations list from Cloudflare D1 with strict tenant isolation
+  const loadConversations = useCallback(
+    async (showLoading = false, force = false) => {
+      if (showLoading) setIsLoadingConversations(true);
+      const list = await fetchConversations(force, activeBusiness.whatsappNumbers);
 
-  // Load messages for a specific phone number
-  const loadMessages = useCallback(async (phone: string, showLoading = false, force = false) => {
-    if (showLoading) setIsLoadingMessages(true);
-    const msgs = await fetchMessages(phone, force);
-    setMessages(msgs);
-    if (showLoading) setIsLoadingMessages(false);
-  }, []);
+      // Strict client-side isolation
+      const isolated = list.filter((c) => {
+        if (c.business_number) {
+          return matchesAnyBusinessNumber(activeBusiness.whatsappNumbers, c.business_number);
+        }
+        return matchesAnyBusinessNumber(activeBusiness.whatsappNumbers, c.phone_number);
+      });
 
-  // Initial load of conversation list (Only runs once on mount)
+      setConversations(isolated);
+      if (showLoading) setIsLoadingConversations(false);
+    },
+    [activeBusiness.whatsappNumbers]
+  );
+
+  // Load messages for a specific phone number with strict tenant isolation
+  const loadMessages = useCallback(
+    async (phone: string, showLoading = false, force = false) => {
+      if (showLoading) setIsLoadingMessages(true);
+      const msgs = await fetchMessages(phone, force, activeBusiness.whatsappNumbers);
+
+      const isolatedMsgs = msgs.filter(
+        (m) =>
+          matchesAnyBusinessNumber(activeBusiness.whatsappNumbers, m.to_number) ||
+          matchesAnyBusinessNumber(activeBusiness.whatsappNumbers, m.from_number)
+      );
+
+      setMessages(isolatedMsgs);
+      if (showLoading) setIsLoadingMessages(false);
+    },
+    [activeBusiness.whatsappNumbers]
+  );
+
+  // Reload conversations whenever the active business changes
   useEffect(() => {
-    if (hasLoadedInitialConversations.current) return;
-    hasLoadedInitialConversations.current = true;
-    loadConversations(true);
-  }, [loadConversations]);
+    loadConversations(true, true);
+    setSelectedPhone(null);
+    setMessages([]);
+  }, [activeBusiness.id, loadConversations]);
 
   // URL searchParams change handling
   useEffect(() => {
@@ -88,10 +117,22 @@ function ChatInbox() {
     setIsPusherActive(true);
     const channel = pusher.subscribe("whatsapp-inbox");
 
-    // 1. Instant New Message Event
+    // 1. Instant New Message Event with strict tenant verification
     const handleNewMessage = (data: { message: StoredMessage; phone_number: string }) => {
       const newMsg = data.message;
       const phone = data.phone_number;
+
+      // Strict isolation: only process if message is for one of this tenant's WhatsApp numbers!
+      const currentTenantNumbers = activeNumbersRef.current;
+      const isForThisTenant =
+        matchesAnyBusinessNumber(currentTenantNumbers, newMsg.to_number) ||
+        matchesAnyBusinessNumber(currentTenantNumbers, newMsg.from_number) ||
+        matchesAnyBusinessNumber(currentTenantNumbers, phone);
+
+      if (!isForThisTenant) {
+        // Message belongs to another business client - strictly ignore
+        return;
+      }
 
       if (selectedPhoneRef.current === phone) {
         setMessages((prev) => {
@@ -120,6 +161,7 @@ function ChatInbox() {
         } else {
           const newConv: ConversationSummary = {
             phone_number: phone,
+            business_number: newMsg.direction === "inbound" ? newMsg.to_number : newMsg.from_number,
             sender_name: newMsg.sender_name || phone,
             last_message: newMsg.text || `[${newMsg.type}]`,
             last_timestamp: newMsg.timestamp,

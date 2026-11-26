@@ -76,9 +76,11 @@ export default function ConversationList({
           <span className="bg-slate-100 text-slate-700 text-xs px-2 py-0.5 rounded-full font-semibold border border-slate-200 flex-shrink-0">
             {conversations.length}
           </span>
-          <span className="text-[10px] text-amber-700 bg-amber-50 border border-amber-200/80 px-2 py-0.5 rounded-full font-medium truncate max-w-[120px]">
-            {activeBusiness.name}
-          </span>
+          <div className="min-w-0">
+            <span className="text-[10px] text-amber-800 bg-amber-50 border border-amber-200/80 px-2 py-0.5 rounded-full font-medium truncate block max-w-[120px]">
+              {activeBusiness.name}
+            </span>
+          </div>
         </div>
 
         <div className="flex items-center space-x-1">
@@ -102,6 +104,23 @@ export default function ConversationList({
           </button>
         </div>
       </div>
+
+      {/* Configured WhatsApp Numbers Indicator */}
+      {activeBusiness.whatsappNumbers && activeBusiness.whatsappNumbers.length > 0 && (
+        <div className="px-3.5 py-1.5 bg-amber-50/50 border-b border-amber-100 flex items-center justify-between text-[11px] text-amber-900">
+          <span className="text-[10px] text-slate-500 font-medium">Isolated WhatsApp:</span>
+          <div className="flex flex-wrap gap-1 justify-end max-w-[200px]">
+            {activeBusiness.whatsappNumbers.map((num) => (
+              <span
+                key={num}
+                className="px-1.5 py-0.2 bg-white border border-amber-200 rounded text-[10px] font-mono font-medium text-amber-800"
+              >
+                {num}
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Search Bar */}
       <div className="p-2.5 bg-white border-b border-slate-100">

@@ -4,12 +4,15 @@ import React, { createContext, useContext, useState, useEffect, useCallback } fr
 import { useAuth } from "@/context/AuthContext";
 import type { BusinessTenant } from "@/types";
 
-const DEFAULT_BUSINESSES: BusinessTenant[] = [
+export const DEFAULT_BUSINESSES: BusinessTenant[] = [
   {
     id: "flagship",
     name: "THE BARBER SHOP",
-    tagline: "Flagship Salon & Lounge",
-    phone: "+91 98765 43210",
+    tagline: "Flagship Salon & Lounge (Demo)",
+    phone: "+91 96014 75410",
+    whatsappNumbers: ["9601475410"],
+    assignedEmail: "demo@thebarbershop.com",
+    assignedPassword: "DemoClient@2026",
     city: "Mumbai",
     initials: "BS",
   },
@@ -18,6 +21,9 @@ const DEFAULT_BUSINESSES: BusinessTenant[] = [
     name: "Royal Cuts Lounge",
     tagline: "Premium Men's Grooming Club",
     phone: "+91 98220 11223",
+    whatsappNumbers: ["123", "456"],
+    assignedEmail: "royal@thebarbershop.com",
+    assignedPassword: "Royal@2026",
     city: "Delhi",
     initials: "RC",
   },
@@ -26,6 +32,9 @@ const DEFAULT_BUSINESSES: BusinessTenant[] = [
     name: "Elite Grooming Studio",
     tagline: "Executive Hair & Beard Spa",
     phone: "+91 99345 67890",
+    whatsappNumbers: ["111"],
+    assignedEmail: "elite@thebarbershop.com",
+    assignedPassword: "Elite@2026",
     city: "Bengaluru",
     initials: "EG",
   },
@@ -34,20 +43,28 @@ const DEFAULT_BUSINESSES: BusinessTenant[] = [
     name: "Urban Fade Barbers",
     tagline: "Contemporary Fade & Styling",
     phone: "+91 97123 45678",
+    whatsappNumbers: ["999", "998", "997"],
+    assignedEmail: "urban@thebarbershop.com",
+    assignedPassword: "Urban@2026",
     city: "Ahmedabad",
     initials: "UF",
   },
 ];
 
 const STORAGE_KEY = "barber_active_business_id";
-const CUSTOM_BUSINESSES_KEY = "barber_custom_businesses";
+export const CUSTOM_BUSINESSES_KEY = "barber_custom_businesses";
 
 interface BusinessContextType {
   activeBusiness: BusinessTenant;
   businesses: BusinessTenant[];
   setActiveBusinessId: (id: string) => void;
   registerBusiness: (business: Omit<BusinessTenant, "id">) => BusinessTenant;
+  updateBusiness: (id: string, updates: Partial<BusinessTenant>) => void;
+  deleteBusiness: (id: string) => void;
+  addWhatsAppNumber: (businessId: string, number: string) => void;
+  removeWhatsAppNumber: (businessId: string, number: string) => void;
   canSwitchBusiness: boolean;
+  isMasterAdmin: boolean;
 }
 
 const BusinessContext = createContext<BusinessContextType>({
@@ -55,7 +72,12 @@ const BusinessContext = createContext<BusinessContextType>({
   businesses: DEFAULT_BUSINESSES,
   setActiveBusinessId: () => {},
   registerBusiness: () => DEFAULT_BUSINESSES[0],
+  updateBusiness: () => {},
+  deleteBusiness: () => {},
+  addWhatsAppNumber: () => {},
+  removeWhatsAppNumber: () => {},
   canSwitchBusiness: true,
+  isMasterAdmin: true,
 });
 
 export function BusinessProvider({ children }: { children: React.ReactNode }) {
@@ -67,7 +89,12 @@ export function BusinessProvider({ children }: { children: React.ReactNode }) {
       const stored = localStorage.getItem(CUSTOM_BUSINESSES_KEY);
       if (stored) {
         const parsed = JSON.parse(stored);
-        return [...DEFAULT_BUSINESSES, ...parsed];
+        // Merge stored overrides with default businesses
+        const defaultMap = new Map(DEFAULT_BUSINESSES.map((b) => [b.id, b]));
+        parsed.forEach((p: BusinessTenant) => {
+          defaultMap.set(p.id, p);
+        });
+        return Array.from(defaultMap.values());
       }
     } catch {
       // ignore
@@ -100,17 +127,34 @@ export function BusinessProvider({ children }: { children: React.ReactNode }) {
 
     if (!user) return;
 
+    // Check if user email matches any tenant's assigned email
+    const matchedTenant = businesses.find(
+      (b) => b.assignedEmail && b.assignedEmail.toLowerCase() === user.email.toLowerCase()
+    );
+    if (matchedTenant) {
+      setActiveBusinessIdState(matchedTenant.id);
+      return;
+    }
+
     if (user.email === "royal@thebarbershop.com") {
       setActiveBusinessIdState("royal-cuts");
     } else if (user.email === "elite@thebarbershop.com") {
       setActiveBusinessIdState("elite-grooming");
     } else if (user.email === "urban@thebarbershop.com") {
       setActiveBusinessIdState("urban-fade");
+    } else if (user.email === "demo@thebarbershop.com") {
+      setActiveBusinessIdState("flagship");
     }
-  }, [user]);
+  }, [user, businesses]);
+
+  // Master admin check
+  const isMasterAdmin =
+    Boolean(user) &&
+    (user?.email === "admin@thebarbershop.com" ||
+      user?.email === "admin@barberlounge.com");
 
   // Master admin can switch between businesses; client accounts are locked to their own
-  const canSwitchBusiness = !user || user.email === "admin@thebarbershop.com" || user.email === "admin@barberlounge.com" || user.email === "demo@thebarbershop.com";
+  const canSwitchBusiness = isMasterAdmin || !user;
 
   const setActiveBusinessId = useCallback((id: string) => {
     setActiveBusinessIdState(id);
@@ -119,38 +163,96 @@ export function BusinessProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
-  const registerBusiness = useCallback((newBiz: Omit<BusinessTenant, "id">): BusinessTenant => {
-    const id = newBiz.name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "") || `biz-${Date.now()}`;
-    const initials = newBiz.name
-      .split(" ")
-      .map((w) => w[0])
-      .join("")
-      .slice(0, 2)
-      .toUpperCase();
+  const saveBusinessesToStorage = (updated: BusinessTenant[]) => {
+    if (typeof window !== "undefined") {
+      localStorage.setItem(CUSTOM_BUSINESSES_KEY, JSON.stringify(updated));
+    }
+  };
 
-    const created: BusinessTenant = {
-      ...newBiz,
-      id,
-      initials: initials || "BIZ",
-      isCustom: true,
-    };
+  const registerBusiness = useCallback(
+    (newBiz: Omit<BusinessTenant, "id">): BusinessTenant => {
+      const id =
+        newBiz.name
+          .toLowerCase()
+          .replace(/[^a-z0-9]+/g, "-")
+          .replace(/^-+|-+$/g, "") || `biz-${Date.now()}`;
+      const initials = newBiz.name
+        .split(" ")
+        .map((w) => w[0])
+        .join("")
+        .slice(0, 2)
+        .toUpperCase();
 
+      const created: BusinessTenant = {
+        ...newBiz,
+        id,
+        initials: initials || "BIZ",
+        isCustom: true,
+        whatsappNumbers: newBiz.whatsappNumbers || [newBiz.phone.replace(/\D/g, "")].filter(Boolean),
+      };
+
+      setBusinesses((prev) => {
+        const updated = [...prev, created];
+        saveBusinessesToStorage(updated);
+        return updated;
+      });
+
+      setActiveBusinessId(id);
+      return created;
+    },
+    [setActiveBusinessId]
+  );
+
+  const updateBusiness = useCallback((id: string, updates: Partial<BusinessTenant>) => {
     setBusinesses((prev) => {
-      const updated = [...prev, created];
-      if (typeof window !== "undefined") {
-        const customOnly = updated.filter((b) => b.isCustom);
-        localStorage.setItem(CUSTOM_BUSINESSES_KEY, JSON.stringify(customOnly));
-      }
+      const updated = prev.map((b) => (b.id === id ? { ...b, ...updates } : b));
+      saveBusinessesToStorage(updated);
       return updated;
     });
+  }, []);
 
-    setActiveBusinessId(id);
-    return created;
+  const deleteBusiness = useCallback((id: string) => {
+    setBusinesses((prev) => {
+      const updated = prev.filter((b) => b.id !== id);
+      saveBusinessesToStorage(updated);
+      return updated;
+    });
+    setActiveBusinessId(DEFAULT_BUSINESSES[0].id);
   }, [setActiveBusinessId]);
 
+  const addWhatsAppNumber = useCallback((businessId: string, number: string) => {
+    const cleaned = number.replace(/\D/g, "");
+    if (!cleaned) return;
+
+    setBusinesses((prev) => {
+      const updated = prev.map((b) => {
+        if (b.id !== businessId) return b;
+        const existing = b.whatsappNumbers || [];
+        if (existing.includes(cleaned)) return b;
+        return { ...b, whatsappNumbers: [...existing, cleaned] };
+      });
+      saveBusinessesToStorage(updated);
+      return updated;
+    });
+  }, []);
+
+  const removeWhatsAppNumber = useCallback((businessId: string, number: string) => {
+    const cleaned = number.replace(/\D/g, "");
+    setBusinesses((prev) => {
+      const updated = prev.map((b) => {
+        if (b.id !== businessId) return b;
+        return {
+          ...b,
+          whatsappNumbers: (b.whatsappNumbers || []).filter((n) => n !== cleaned),
+        };
+      });
+      saveBusinessesToStorage(updated);
+      return updated;
+    });
+  }, []);
+
   const activeBusiness =
-    businesses.find((b) => b.id === activeBusinessId) ||
-    DEFAULT_BUSINESSES[0];
+    businesses.find((b) => b.id === activeBusinessId) || DEFAULT_BUSINESSES[0];
 
   return (
     <BusinessContext.Provider
@@ -159,7 +261,12 @@ export function BusinessProvider({ children }: { children: React.ReactNode }) {
         businesses,
         setActiveBusinessId,
         registerBusiness,
+        updateBusiness,
+        deleteBusiness,
+        addWhatsAppNumber,
+        removeWhatsAppNumber,
         canSwitchBusiness,
+        isMasterAdmin,
       }}
     >
       {children}

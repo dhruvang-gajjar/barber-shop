@@ -18,6 +18,7 @@ export interface ConversationSummary {
   last_timestamp: number;
   last_direction: "inbound" | "outbound";
   unread_count: number;
+  business_number?: string;
 }
 
 export interface Lead {
@@ -130,6 +131,10 @@ export interface BusinessTenant {
   name: string;
   tagline: string;
   phone: string;
+  whatsappNumbers: string[];
+  assignedEmail?: string;
+  assignedPassword?: string;
+  wabaId?: string;
   address?: string;
   city?: string;
   initials?: string;
