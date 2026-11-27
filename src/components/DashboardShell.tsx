@@ -3,7 +3,6 @@
 import React, { Suspense } from "react";
 import { usePathname } from "next/navigation";
 import { AuthProvider, useAuth } from "@/context/AuthContext";
-import { BusinessProvider } from "@/context/BusinessContext";
 import { NotificationProvider } from "@/context/NotificationContext";
 import NextAuthProvider from "@/components/NextAuthProvider";
 import Navbar from "@/components/Navbar";
@@ -50,12 +49,10 @@ export default function DashboardShell({ children }: { children: React.ReactNode
   return (
     <NextAuthProvider>
       <AuthProvider>
-        <BusinessProvider>
-          <NotificationProvider>
-            <ServiceWorkerCleaner />
-            <ShellContent>{children}</ShellContent>
-          </NotificationProvider>
-        </BusinessProvider>
+        <NotificationProvider>
+          <ServiceWorkerCleaner />
+          <ShellContent>{children}</ShellContent>
+        </NotificationProvider>
       </AuthProvider>
     </NextAuthProvider>
   );

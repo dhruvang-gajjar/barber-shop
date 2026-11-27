@@ -19,9 +19,7 @@ import {
   Check,
   ChevronLeft,
   ChevronRight,
-  Building2,
 } from "lucide-react";
-import { useBusiness } from "@/context/BusinessContext";
 import {
   fetchSalonAppointments,
   fetchSalonServices,
@@ -34,7 +32,6 @@ function QueueDashboard() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const dateParam = searchParams.get("date");
-  const { activeBusiness } = useBusiness();
 
   // State
   const [selectedDate, setSelectedDate] = useState<string>(() => {
@@ -116,7 +113,7 @@ function QueueDashboard() {
 
   useEffect(() => {
     loadAppointments(true);
-  }, [loadAppointments, activeBusiness.id]);
+  }, [loadAppointments]);
 
   // Auto-poll queue every 20 seconds
   useEffect(() => {
@@ -287,9 +284,7 @@ function QueueDashboard() {
       time: walkinTime,
       services: walkinServices,
       amount: `₹${sum}`,
-      notes: walkinNotes.trim()
-        ? `${walkinNotes.trim()} • [${activeBusiness.name}]`
-        : `[${activeBusiness.name}] Walk-in`,
+      notes: walkinNotes.trim() ? walkinNotes.trim() : undefined,
     });
 
     if (res.success) {
@@ -378,15 +373,6 @@ function QueueDashboard() {
               className={`w-3.5 h-3.5 ${isRefreshing ? "animate-spin text-amber-600" : ""}`}
             />
           </button>
-
-          {/* Active Business Badge */}
-          <div className="hidden sm:flex items-center space-x-1.5 px-3 py-1.5 bg-amber-50/70 border border-amber-200/60 rounded-xl text-xs font-semibold text-amber-900 shadow-2xs">
-            <Building2 className="w-3.5 h-3.5 text-amber-700" />
-            <span className="truncate max-w-[160px]">{activeBusiness.name}</span>
-            {activeBusiness.city && (
-              <span className="text-amber-600/70 text-[11px] font-normal">• {activeBusiness.city}</span>
-            )}
-          </div>
 
           {/* Add Walk-in Button with Luxury Amber Gradient */}
           <button

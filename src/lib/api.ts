@@ -20,24 +20,14 @@ let inFlightConversations: Promise<ConversationSummary[]> | null = null;
  * Fetches active conversation threads.
  * Automatically deduplicates simultaneous in-flight requests (e.g. React StrictMode mount).
  */
-export async function fetchConversations(
-  force = false,
-  businessNumbers?: string[]
-): Promise<ConversationSummary[]> {
-  const bizKey = businessNumbers?.slice().sort().join(",") || "__all__";
-  const inFlightKey = `conv_${bizKey}`;
-
+export async function fetchConversations(force = false): Promise<ConversationSummary[]> {
   if (inFlightConversations && !force) {
     return inFlightConversations;
   }
 
   inFlightConversations = (async () => {
     try {
-      let url = `${WORKER_URL}/api/conversations?limit=50`;
-      if (businessNumbers && businessNumbers.length > 0) {
-        url += `&business_numbers=${encodeURIComponent(businessNumbers.join(","))}`;
-      }
-      const res = await fetch(url, {
+      const res = await fetch(`${WORKER_URL}/api/conversations?limit=50`, {
         cache: "no-store",
       });
       if (!res.ok) throw new Error(`HTTP error ${res.status}`);
@@ -62,26 +52,17 @@ const inFlightMessages = new Map<string, Promise<StoredMessage[]>>();
  * Fetches message history for a specific phone number or all recent messages.
  * Automatically deduplicates simultaneous in-flight requests.
  */
-export async function fetchMessages(
-  phone?: string,
-  force = false,
-  businessNumbers?: string[]
-): Promise<StoredMessage[]> {
-  const bizKey = businessNumbers?.slice().sort().join(",") || "";
-  const key = `${phone || "__all__"}_${bizKey}`;
+export async function fetchMessages(phone?: string, force = false): Promise<StoredMessage[]> {
+  const key = phone || "__all__";
   if (inFlightMessages.has(key) && !force) {
     return inFlightMessages.get(key)!;
   }
 
   const promise = (async () => {
     try {
-      let url = phone
+      const url = phone
         ? `${WORKER_URL}/api/messages?phone=${encodeURIComponent(phone)}&limit=100`
         : `${WORKER_URL}/api/messages?limit=100`;
-
-      if (businessNumbers && businessNumbers.length > 0) {
-        url += `&business_numbers=${encodeURIComponent(businessNumbers.join(","))}`;
-      }
 
       const res = await fetch(url, { cache: "no-store" });
       if (!res.ok) throw new Error(`HTTP error ${res.status}`);
@@ -108,14 +89,13 @@ export async function fetchMessages(
  */
 export async function sendHumanMessage(
   to: string,
-  text: string,
-  fromNumber?: string
+  text: string
 ): Promise<{ success: boolean; message_id?: string; error?: string }> {
   try {
     const res = await fetch(`${WORKER_URL}/api/send-message`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ to, text, from_number: fromNumber }),
+      body: JSON.stringify({ to, text }),
     });
 
     const data = await res.json();

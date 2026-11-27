@@ -125,18 +125,3 @@ export interface SalonQueueResponse {
   pending: Lead[];
   completed: Lead[];
 }
-
-export interface BusinessTenant {
-  id: string;
-  name: string;
-  tagline: string;
-  phone: string;
-  whatsappNumbers: string[];
-  assignedEmail?: string;
-  assignedPassword?: string;
-  wabaId?: string;
-  address?: string;
-  city?: string;
-  initials?: string;
-  isCustom?: boolean;
-}

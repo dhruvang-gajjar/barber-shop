@@ -166,14 +166,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [router]);
 
   const login = useCallback(async (credentials: LoginRequest) => {
-    // Configured Tenant & Demo Accounts (Requiring explicit email & password)
+    // Configured Demo Accounts
     const validDemos = [
       {
         email: "admin@thebarbershop.com",
         passwords: ["BarberAdmin@2026", "barber2026", "admin123"],
         user: {
           id: "master_admin",
-          name: "Master Barber Admin",
+          name: "Barber Admin",
           email: "admin@thebarbershop.com",
           role: "admin" as const,
         },
@@ -182,39 +182,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         email: "demo@thebarbershop.com",
         passwords: ["DemoClient@2026", "demo2026", "barber2026"],
         user: {
-          id: "demo_evaluator",
-          name: "Salon Demo Client",
+          id: "demo_admin",
+          name: "Demo Admin",
           email: "demo@thebarbershop.com",
-          role: "admin" as const,
-        },
-      },
-      {
-        email: "royal@thebarbershop.com",
-        passwords: ["Royal@2026", "barber2026"],
-        user: {
-          id: "royal_owner",
-          name: "Royal Cuts Manager",
-          email: "royal@thebarbershop.com",
-          role: "admin" as const,
-        },
-      },
-      {
-        email: "elite@thebarbershop.com",
-        passwords: ["Elite@2026", "barber2026"],
-        user: {
-          id: "elite_owner",
-          name: "Elite Grooming Manager",
-          email: "elite@thebarbershop.com",
-          role: "admin" as const,
-        },
-      },
-      {
-        email: "urban@thebarbershop.com",
-        passwords: ["Urban@2026", "barber2026"],
-        user: {
-          id: "urban_owner",
-          name: "Urban Fade Manager",
-          email: "urban@thebarbershop.com",
           role: "admin" as const,
         },
       },
@@ -223,7 +193,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         passwords: ["admin123", "barber2026"],
         user: {
           id: "master_admin",
-          name: "Master Barber Admin",
+          name: "Barber Admin",
           email: "admin@barberlounge.com",
           role: "admin" as const,
         },
@@ -248,42 +218,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       });
       router.replace("/");
       return { success: true };
-    }
-
-    // Check dynamic registered clients created by Admin
-    try {
-      if (typeof window !== "undefined") {
-        const storedCustom = localStorage.getItem("barber_custom_businesses");
-        if (storedCustom) {
-          const list = JSON.parse(storedCustom);
-          const found = list.find(
-            (c: any) =>
-              c.assignedEmail &&
-              c.assignedEmail.toLowerCase() === targetEmail &&
-              c.assignedPassword === credentials.password
-          );
-          if (found) {
-            const tokenId = `demo_token_${found.id}`;
-            localStorage.setItem(TOKEN_KEY, tokenId);
-            localStorage.setItem("barber_auth_email", found.assignedEmail);
-            localStorage.setItem("barber_auth_name", found.name);
-            localStorage.setItem("barber_active_business_id", found.id);
-            setToken(tokenId);
-            setUser({
-              id: found.id,
-              name: found.name,
-              email: found.assignedEmail,
-              role: "admin",
-              created_at: Math.floor(Date.now() / 1000),
-              updated_at: Math.floor(Date.now() / 1000),
-            });
-            router.replace("/");
-            return { success: true };
-          }
-        }
-      }
-    } catch {
-      // ignore
     }
 
     const res = await apiLogin(credentials);

@@ -13,7 +13,6 @@ import {
 } from "lucide-react";
 import type { ConversationSummary } from "@/types";
 import { formatConversationTime, formatPhoneNumber, cn } from "@/lib/utils";
-import { useBusiness } from "@/context/BusinessContext";
 
 interface ConversationListProps {
   conversations: ConversationSummary[];
@@ -34,7 +33,6 @@ export default function ConversationList({
   onRefresh,
   className,
 }: ConversationListProps) {
-  const { activeBusiness } = useBusiness();
   const [searchQuery, setSearchQuery] = useState("");
   const [showNewChatModal, setShowNewChatModal] = useState(false);
   const [newChatPhone, setNewChatPhone] = useState("");
@@ -71,23 +69,18 @@ export default function ConversationList({
     >
       {/* Header bar */}
       <div className="bg-gradient-to-r from-slate-50 via-white to-slate-50 px-4 py-3 flex items-center justify-between border-b border-slate-200">
-        <div className="flex items-center space-x-2 min-w-0">
-          <h2 className="font-bold text-slate-900 text-base flex-shrink-0">Chats</h2>
-          <span className="bg-slate-100 text-slate-700 text-xs px-2 py-0.5 rounded-full font-semibold border border-slate-200 flex-shrink-0">
+        <div className="flex items-center space-x-2">
+          <h2 className="font-bold text-slate-900 text-base">Chats</h2>
+          <span className="bg-slate-100 text-slate-700 text-xs px-2 py-0.5 rounded-full font-semibold border border-slate-200">
             {conversations.length}
           </span>
-          <div className="min-w-0">
-            <span className="text-[10px] text-amber-800 bg-amber-50 border border-amber-200/80 px-2 py-0.5 rounded-full font-medium truncate block max-w-[120px]">
-              {activeBusiness.name}
-            </span>
-          </div>
         </div>
 
         <div className="flex items-center space-x-1">
           <button
             onClick={() => setShowNewChatModal(true)}
             title="Start new chat with phone number"
-            className="p-2 text-slate-600 hover:text-amber-700 hover:bg-amber-50 rounded-xl transition"
+            className="p-2 text-slate-600 hover:text-amber-700 hover:bg-amber-50 rounded-xl transition cursor-pointer"
           >
             <Plus className="w-4 h-4" />
           </button>
@@ -96,7 +89,7 @@ export default function ConversationList({
             onClick={onRefresh}
             title="Refresh conversations"
             className={cn(
-              "p-2 text-slate-600 hover:text-amber-700 hover:bg-amber-50 rounded-xl transition",
+              "p-2 text-slate-600 hover:text-amber-700 hover:bg-amber-50 rounded-xl transition cursor-pointer",
               isLoading && "animate-spin text-amber-600"
             )}
           >
@@ -104,23 +97,6 @@ export default function ConversationList({
           </button>
         </div>
       </div>
-
-      {/* Configured WhatsApp Numbers Indicator */}
-      {activeBusiness.whatsappNumbers && activeBusiness.whatsappNumbers.length > 0 && (
-        <div className="px-3.5 py-1.5 bg-amber-50/50 border-b border-amber-100 flex items-center justify-between text-[11px] text-amber-900">
-          <span className="text-[10px] text-slate-500 font-medium">Isolated WhatsApp:</span>
-          <div className="flex flex-wrap gap-1 justify-end max-w-[200px]">
-            {activeBusiness.whatsappNumbers.map((num) => (
-              <span
-                key={num}
-                className="px-1.5 py-0.2 bg-white border border-amber-200 rounded text-[10px] font-mono font-medium text-amber-800"
-              >
-                {num}
-              </span>
-            ))}
-          </div>
-        </div>
-      )}
 
       {/* Search Bar */}
       <div className="p-2.5 bg-white border-b border-slate-100">
